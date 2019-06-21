@@ -1,16 +1,18 @@
 # TRX To Sonar(qube)
 
+[Forked from gregoryb/trxtosonar](https://github.com/gregoryb/trxtosonar)
+
 Basic dotnet core console app to convert TRX files to Sonarqube Generic Test Data (Generic Execution).
 
 ### Usage
 
-* `--help` `-h` `-?`
-   Show the current help.
-* `-d` [string]
+- `--help` `-h` `-?`
+  Show the current help.
+- `-d` [string]
   Solution directory to parse (recursive).
-* `-o` [string]  
+- `-o` [string]  
   Output filename.
-* `-a` `--absolute`  
+- `-a` `--absolute`  
   Use absolute path for Sonarqube file path.
 
 ### TODO
