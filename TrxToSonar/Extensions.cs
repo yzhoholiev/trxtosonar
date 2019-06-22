@@ -9,6 +9,7 @@ namespace TrxToSonar
 {
     public static class Extensions
     {
+        private static readonly string _pathSep = Path.DirectorySeparatorChar.ToString();
         public static UnitTest GetUnitTest(this UnitTestResult unitTestResult, TrxDocument trxDocument)
         {
             return trxDocument.TestDefinitions.FirstOrDefault(x => x.Id == unitTestResult.TestId);
@@ -17,10 +18,10 @@ namespace TrxToSonar
         public static string GetTestClass(this UnitTest unitTest)
         {
             var parts = unitTest.Name.Split(".");
-            
+
             return parts.Length > 1 ? parts[parts.Length - 1] : string.Empty;
         }
-        
+
         public static File GetFile(this SonarDocument sonarDocument, string testFile)
         {
             return sonarDocument.Files.FirstOrDefault(x => x.Path == testFile);
@@ -36,15 +37,15 @@ namespace TrxToSonar
             }
 
             var pathIndex = className.LastIndexOf(".", StringComparison.Ordinal);
-            var pathIndexLast = unitTest.TestMethod.CodeBase.IndexOf("\\bin\\", StringComparison.Ordinal);
+            var pathIndexLast = unitTest.TestMethod.CodeBase.IndexOf($"{_pathSep}bin{_pathSep}", StringComparison.Ordinal);
             var path = unitTest.TestMethod.CodeBase.Substring(0, pathIndexLast);
-            var pathIndexFirst = path.LastIndexOf("\\", StringComparison.Ordinal);
+            var pathIndexFirst = path.LastIndexOf(_pathSep, StringComparison.Ordinal);
             path = path.Substring(pathIndexFirst + 1);
-            
+
             var filename = className.Substring(pathIndex + 1, className.Length - pathIndex - 1);
 
             string result;
-            
+
             if (!useAbsolutePath)
             {
                 result = string.Format("{0}.cs", Path.Combine(path, filename));
