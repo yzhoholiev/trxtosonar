@@ -4,10 +4,10 @@ namespace TrxToSonar.Model.Trx
 {
     public class Output
     {
-        [XmlElement (ElementName = "StdOut")]
+        [XmlElement(ElementName = "StdOut")]
         public string StdOut { get; set; }
-        
-        [XmlElement (ElementName = "ErrorInfo")]
+
+        [XmlElement(ElementName = "ErrorInfo")]
         public ErrorInfo ErrorInfo { get; set; }
     }
 }

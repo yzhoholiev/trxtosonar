@@ -8,6 +8,9 @@ nupkg/
 # Visual Studio Code
 .vscode
 
+# Rider
+.idea
+
 # User-specific files
 *.suo
 *.user
@@ -29,6 +32,12 @@ bld/
 msbuild.log
 msbuild.err
 msbuild.wrn
+packages/
+artifacts/
+.nuget/
 
 # Visual Studio 2015
 .vs/
+
+# GitVersion
+gitversion.properties

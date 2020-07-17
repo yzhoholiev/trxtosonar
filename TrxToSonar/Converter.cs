@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using TrxToSonar.Model.Sonar;
 using TrxToSonar.Model.Trx;
@@ -11,23 +9,21 @@ using File = TrxToSonar.Model.Sonar.File;
 namespace TrxToSonar
 {
     public class Converter : IConverter
-    {   
-        private readonly ILoggerFactory loggerFactory;
-        private readonly ILogger logger;
-        private readonly XmlParser<TrxDocument> trxParser = new XmlParser<TrxDocument>();
-        private readonly XmlParser<SonarDocument> sonarParser = new XmlParser<SonarDocument>();
+    {
+        private readonly ILogger _logger;
+        private readonly XmlParser<SonarDocument> _sonarParser = new XmlParser<SonarDocument>();
+        private readonly XmlParser<TrxDocument> _trxParser = new XmlParser<TrxDocument>();
 
-        public Converter(ILoggerFactory loggerFactory)
+        public Converter(ILogger<Converter> logger)
         {
-            this.loggerFactory = loggerFactory;
-            this.logger = this.loggerFactory.CreateLogger<Converter>();
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-        
+
         public bool Save(SonarDocument sonarDocument, string outputFilename)
         {
-            return this.sonarParser.Save(sonarDocument, outputFilename);
+            return _sonarParser.Save(sonarDocument, outputFilename);
         }
-        
+
         public SonarDocument Parse(string solutionDirectory, bool useAbsolutePath)
         {
             if (string.IsNullOrEmpty(solutionDirectory) || !Directory.Exists(solutionDirectory))
@@ -35,62 +31,54 @@ namespace TrxToSonar
                 return null;
             }
 
-            var trxFiles = Directory.EnumerateFiles(solutionDirectory, "*.trx", SearchOption.AllDirectories);
+            IEnumerable<string> trxFiles = Directory.EnumerateFiles(solutionDirectory, "*.trx", SearchOption.AllDirectories);
 
             var sonarDocuments = new List<SonarDocument>();
-            foreach (var trxFile in trxFiles)
+            foreach (string trxFile in trxFiles)
             {
-                this.logger.LogInformation($"Parsing: {trxFile}");
-                var trxDocument = trxParser.Deserialize(trxFile);
-                var sonarDocument = this.Convert(trxDocument, solutionDirectory, useAbsolutePath);
+                _logger.LogInformation($"Parsing: {trxFile}");
+                TrxDocument trxDocument = _trxParser.Deserialize(trxFile);
+                SonarDocument sonarDocument = Convert(trxDocument, solutionDirectory, useAbsolutePath);
 
                 if (sonarDocument != null)
                 {
                     sonarDocuments.Add(sonarDocument);
                 }
             }
-            
+
             // Merge
-            return this.Merge(sonarDocuments);
+            return Merge(sonarDocuments);
         }
 
-        private SonarDocument Merge(List<SonarDocument> sonarDocuments)
+        private SonarDocument Merge(IReadOnlyList<SonarDocument> sonarDocuments)
         {
-            this.logger.LogInformation("Merge {0} file(s).", sonarDocuments.Count);
+            _logger.LogInformation("Merge {0} file(s).", sonarDocuments.Count);
             if (sonarDocuments.Count == 1)
             {
-                return sonarDocuments.FirstOrDefault();
+                return sonarDocuments[0];
             }
-            
+
             var result = new SonarDocument();
-            foreach (var sonarDocument in sonarDocuments)
+            foreach (SonarDocument sonarDocument in sonarDocuments)
+            foreach (File sonarFile in sonarDocument.Files)
             {
-                foreach (var sonarFile in sonarDocument.Files)
-                {
-                    result.Files.Add(sonarFile);
-                } 
+                result.Files.Add(sonarFile);
             }
+
             return result;
         }
-        
+
         private SonarDocument Convert(TrxDocument trxDocument, string solutionDirectory, bool useAbsolutePath)
         {
             var sonarDocument = new SonarDocument();
 
-            foreach (var trxResult in trxDocument.Results)
+            foreach (UnitTestResult trxResult in trxDocument.Results)
             {
-                var unitTest = trxResult.GetUnitTest(trxDocument);
+                UnitTest unitTest = trxResult.GetUnitTest(trxDocument);
 
-                var testFile = unitTest.GetTestFile(solutionDirectory, useAbsolutePath);
+                string testFile = unitTest.GetTestFile(solutionDirectory, useAbsolutePath);
 
-                /*
-                if (!System.IO.File.Exists(Path.Combine(solutionDirectory,testFile)))
-                {
-                    this.logger.LogWarning($"Test file seems to be wrong - Unable to find it: {testFile}");    
-                }
-                */
-                
-                var file = sonarDocument.GetFile(testFile);
+                File file = sonarDocument.GetFile(testFile);
 
                 if (file == null)
                 {
@@ -102,27 +90,28 @@ namespace TrxToSonar
 
                 if (trxResult.Outcome != Outcome.Passed)
                 {
-                    if (trxResult.Outcome == Outcome.NotExecuted )
+                    if (trxResult.Outcome == Outcome.NotExecuted)
                     {
                         testCase.Skipped = new Skipped();
-                        this.logger.LogInformation($"Skipped: {trxResult.TestName}");
-                    }else
+                        _logger.LogInformation($"Skipped: {trxResult.TestName}");
+                    }
+                    else
                     {
-                        testCase.Failure = new Failure(trxResult.Output?.ErrorInfo?.Message, trxResult.Output?.ErrorInfo?.StackTrace);
-                        this.logger.LogInformation($"Failure: {trxResult.TestName}");
+                        testCase.Failure = new Failure(
+                            trxResult.Output?.ErrorInfo?.Message,
+                            trxResult.Output?.ErrorInfo?.StackTrace);
+                        _logger.LogInformation($"Failure: {trxResult.TestName}");
                     }
                 }
                 else
                 {
-                    this.logger.LogInformation($"Passed: {trxResult.TestName}");
+                    _logger.LogInformation($"Passed: {trxResult.TestName}");
                 }
 
                 file.TestCases.Add(testCase);
-                
             }
-            return sonarDocument;
-        }        
-    }
-    
 
+            return sonarDocument;
+        }
+    }
 }

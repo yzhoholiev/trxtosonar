@@ -2,47 +2,46 @@
 {
     public enum Outcome
     {
-    
-        /// <remarks/>
+        /// <remarks />
         Error,
-    
-        /// <remarks/>
+
+        /// <remarks />
         Failed,
-    
-        /// <remarks/>
+
+        /// <remarks />
         Timeout,
-    
-        /// <remarks/>
+
+        /// <remarks />
         Aborted,
-    
-        /// <remarks/>
+
+        /// <remarks />
         Inconclusive,
-    
-        /// <remarks/>
+
+        /// <remarks />
         PassedButRunAborted,
-    
-        /// <remarks/>
+
+        /// <remarks />
         NotRunnable,
-    
-        /// <remarks/>
+
+        /// <remarks />
         NotExecuted,
-    
-        /// <remarks/>
+
+        /// <remarks />
         Disconnected,
-    
-        /// <remarks/>
+
+        /// <remarks />
         Warning,
-    
-        /// <remarks/>
+
+        /// <remarks />
         Passed,
-    
-        /// <remarks/>
+
+        /// <remarks />
         Completed,
-    
-        /// <remarks/>
+
+        /// <remarks />
         InProgress,
-    
-        /// <remarks/>
-        Pending,
+
+        /// <remarks />
+        Pending
     }
 }

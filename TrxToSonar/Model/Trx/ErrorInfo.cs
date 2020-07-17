@@ -6,7 +6,7 @@ namespace TrxToSonar.Model.Trx
     {
         [XmlElement(ElementName = "Message")]
         public string Message { get; set; }
-        
+
         [XmlElement(ElementName = "StackTrace")]
         public string StackTrace { get; set; }
     }

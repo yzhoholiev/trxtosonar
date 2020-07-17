@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq.Expressions;
-using TrxToSonar.Model.Trx;
 
 namespace TrxToSonar
 {
@@ -8,14 +6,7 @@ namespace TrxToSonar
     {
         public static long ToSonarDuration(string trxDuration)
         {
-            if (TimeSpan.TryParse(trxDuration, out var result))
-            {
-                return (long)result.TotalMilliseconds;
-            }
-            else
-            {
-                return 0;
-            }
+            return TimeSpan.TryParse(trxDuration, out TimeSpan result) ? (long) result.TotalMilliseconds : 0;
         }
     }
 }

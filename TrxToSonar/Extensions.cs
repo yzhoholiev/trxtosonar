@@ -9,17 +9,9 @@ namespace TrxToSonar
 {
     public static class Extensions
     {
-        private static readonly string _pathSep = Path.DirectorySeparatorChar.ToString();
         public static UnitTest GetUnitTest(this UnitTestResult unitTestResult, TrxDocument trxDocument)
         {
             return trxDocument.TestDefinitions.FirstOrDefault(x => x.Id == unitTestResult.TestId);
-        }
-
-        public static string GetTestClass(this UnitTest unitTest)
-        {
-            var parts = unitTest.Name.Split(".");
-
-            return parts.Length > 1 ? parts[parts.Length - 1] : string.Empty;
         }
 
         public static File GetFile(this SonarDocument sonarDocument, string testFile)
@@ -29,33 +21,34 @@ namespace TrxToSonar
 
         public static string GetTestFile(this UnitTest unitTest, string solutionDirectory, bool useAbsolutePath)
         {
-            var className = unitTest?.TestMethod?.ClassName;
+            string fullClassName = unitTest?.TestMethod?.ClassName;
 
-            if (string.IsNullOrEmpty(className))
+            if (string.IsNullOrEmpty(fullClassName))
             {
-                return string.Empty;
+                throw new NullReferenceException("Class name was not provided");
             }
 
-            var pathIndex = className.LastIndexOf(".", StringComparison.Ordinal);
-            var pathIndexLast = unitTest.TestMethod.CodeBase.IndexOf($"{_pathSep}bin{_pathSep}", StringComparison.Ordinal);
-            var path = unitTest.TestMethod.CodeBase.Substring(0, pathIndexLast);
-            var pathIndexFirst = path.LastIndexOf(_pathSep, StringComparison.Ordinal);
-            path = path.Substring(pathIndexFirst + 1);
+            string className = fullClassName.Split(".", StringSplitOptions.RemoveEmptyEntries)[^1];
 
-            var filename = className.Substring(pathIndex + 1, className.Length - pathIndex - 1);
+            string testProjectSignature = Path.Combine(".Tests", "bin");
+            int indexOfSignature = unitTest.TestMethod.CodeBase.IndexOf(testProjectSignature, StringComparison.Ordinal);
+            string projectDirectory = unitTest.TestMethod.CodeBase.Substring(0, indexOfSignature + 6);
 
-            string result;
+            string[] files = Directory.GetFiles(projectDirectory, $"{className}.cs", SearchOption.AllDirectories);
+
+            if (files.Length == 0)
+            {
+                throw new FileNotFoundException($"Cannot find file with class {className}. Check that file has the same name as the class.");
+            }
+
+            string result = files[0];
 
             if (!useAbsolutePath)
             {
-                result = string.Format("{0}.cs", Path.Combine(path, filename));
-            }
-            else
-            {
-                result = string.Format("{0}.cs", Path.Combine(solutionDirectory, path, filename));
+                result = result.Substring(solutionDirectory.Length + 1);
             }
 
-            return result.Replace(" ", "\\\\ ");
+            return result;
         }
     }
 }
