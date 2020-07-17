@@ -6,13 +6,11 @@ namespace TrxToSonar.Model.Trx
     {
         [XmlAttribute(AttributeName = "codeBase")]
         public string CodeBase { get; set; }
-        
+
         [XmlAttribute(AttributeName = "className")]
         public string ClassName { get; set; }
-        
+
         [XmlAttribute(AttributeName = "name")]
         public string Name { get; set; }
-        
-        
     }
 }

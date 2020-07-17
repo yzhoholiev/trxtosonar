@@ -6,7 +6,7 @@ namespace TrxToSonar.Model.Sonar
     {
         [XmlAttribute(AttributeName = "message")]
         public string Message { get; set; }
-        
+
         [XmlText]
         public string Value { get; set; }
     }

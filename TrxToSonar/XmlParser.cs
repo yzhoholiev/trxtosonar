@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -7,15 +6,11 @@ namespace TrxToSonar
 {
     public class XmlParser<T>
     {
-        private readonly XmlSerializer xmlSerializer = new XmlSerializer(typeof(T));
-
-        public XmlParser()
-        {
-        }
+        private readonly XmlSerializer _xmlSerializer = new XmlSerializer(typeof(T));
 
         public bool Save(T xmlDocument, string outputFilename)
         {
-            var xmlContent = this.Serialize(xmlDocument);
+            string xmlContent = Serialize(xmlDocument);
 
             if (string.IsNullOrEmpty(xmlContent))
             {
@@ -33,10 +28,8 @@ namespace TrxToSonar
 
         public T Deserialize(string filename)
         {
-            using (var streamReader = new StreamReader(filename))
-            {
-                return (T) xmlSerializer.Deserialize(streamReader);
-            }
+            using var streamReader = new StreamReader(filename);
+            return (T) _xmlSerializer.Deserialize(streamReader);
         }
 
         private string Serialize(T xmlDocument)
@@ -50,14 +43,10 @@ namespace TrxToSonar
                 OmitXmlDeclaration = true
             };
 
-            using (var streamWriter = new StringWriter())
-            {
-                using (var xmlWriter = XmlWriter.Create(streamWriter, xmlSettings))
-                {
-                    xmlSerializer.Serialize(xmlWriter, xmlDocument, emptyNamespaces);
-                    return streamWriter.ToString();
-                }
-            }
+            using var streamWriter = new StringWriter();
+            using var xmlWriter = XmlWriter.Create(streamWriter, xmlSettings);
+            _xmlSerializer.Serialize(xmlWriter, xmlDocument, emptyNamespaces);
+            return streamWriter.ToString();
         }
     }
 }

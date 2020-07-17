@@ -1,17 +1,18 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TrxToSonar.Model.Sonar;
 
 namespace TrxToSonar
 {
-    class Program
+    public static class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             var serviceCollection = new ServiceCollection();
             ConfigureServices(serviceCollection);
 
-            var serviceProvider = serviceCollection.BuildServiceProvider();
+            using ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
 
             var app = new CommandLineApplication
             {
@@ -21,33 +22,34 @@ namespace TrxToSonar
 
             app.HelpOption("-?|-h|--help");
 
-            var solutionDirectoryOption = app.Option("-d", "Solution Directory to parse.", CommandOptionType.SingleValue);
-            var outputOption = app.Option("-o", "Output filename.", CommandOptionType.SingleValue);
-            var absolutePathOption = app.Option("-a|--absolute", "Use Absolute Path", CommandOptionType.NoValue);
+            CommandOption solutionDirectoryOption =
+                app.Option("-d", "Solution Directory to parse.", CommandOptionType.SingleValue);
+            CommandOption outputOption = app.Option("-o", "Output filename.", CommandOptionType.SingleValue);
+            CommandOption absolutePathOption = app.Option("-a|--absolute", "Use Absolute Path", CommandOptionType.NoValue);
 
-            app.OnExecute(() =>
-            {
-                if (solutionDirectoryOption.HasValue() && outputOption.HasValue())
+            app.OnExecute(
+                () =>
                 {
-                    var converter = serviceProvider.GetService<IConverter>();
-                    var sonarDocument = converter.Parse(solutionDirectoryOption.Value(), absolutePathOption.HasValue());
-                    converter.Save(sonarDocument, outputOption.Value());
-                }
-                else
-                {
-                    app.ShowHint();
-                }
+                    if (solutionDirectoryOption.HasValue() && outputOption.HasValue())
+                    {
+                        var converter = serviceProvider.GetService<IConverter>();
+                        SonarDocument sonarDocument = converter.Parse(solutionDirectoryOption.Value(), absolutePathOption.HasValue());
+                        converter.Save(sonarDocument, outputOption.Value());
+                    }
+                    else
+                    {
+                        app.ShowHint();
+                    }
 
-                return 0;
-            });
+                    return 0;
+                });
 
             app.Execute(args);
         }
 
         private static void ConfigureServices(IServiceCollection serviceCollection)
         {
-            serviceCollection.AddSingleton(new LoggerFactory().AddConsole());
-            serviceCollection.AddLogging();
+            serviceCollection.AddLogging(builder => builder.AddConsole());
             serviceCollection.AddSingleton<IConverter, Converter>();
         }
     }
