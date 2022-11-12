@@ -1,15 +1,14 @@
 using TrxToSonar;
 using Xunit;
 
-namespace TrxToSonarTest
+namespace TrxToSonarTest;
+
+public class UtilsTests
 {
-    public class UtilsTests
+    [Fact]
+    public void TrxDurationShouldBeConverted()
     {
-        [Fact]
-        public void TrxDurationShouldBeConverted()
-        {
-            long sonarDuration = Utils.ToSonarDuration("00:00:00.0090000");
-            Assert.Equal(9, sonarDuration);
-        }
+        long sonarDuration = Utils.ToSonarDuration("00:00:00.0090000");
+        Assert.Equal(9, sonarDuration);
     }
 }

@@ -1,10 +1,9 @@
 ﻿using System.Xml.Serialization;
 
-namespace TrxToSonar.Model.Trx
+namespace TrxToSonar.Model.Trx;
+
+public class Execution
 {
-    public class Execution
-    {
-        [XmlAttribute(AttributeName = "id")]
-        public string Id { get; set; }
-    }
+    [XmlAttribute(AttributeName = "id")]
+    public string? Id { get; set; }
 }

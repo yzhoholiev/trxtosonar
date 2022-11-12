@@ -1,47 +1,46 @@
-﻿namespace TrxToSonar.Model.Trx
+﻿namespace TrxToSonar.Model.Trx;
+
+public enum Outcome
 {
-    public enum Outcome
-    {
-        /// <remarks />
-        Error,
+    /// <remarks />
+    Error,
 
-        /// <remarks />
-        Failed,
+    /// <remarks />
+    Failed,
 
-        /// <remarks />
-        Timeout,
+    /// <remarks />
+    Timeout,
 
-        /// <remarks />
-        Aborted,
+    /// <remarks />
+    Aborted,
 
-        /// <remarks />
-        Inconclusive,
+    /// <remarks />
+    Inconclusive,
 
-        /// <remarks />
-        PassedButRunAborted,
+    /// <remarks />
+    PassedButRunAborted,
 
-        /// <remarks />
-        NotRunnable,
+    /// <remarks />
+    NotRunnable,
 
-        /// <remarks />
-        NotExecuted,
+    /// <remarks />
+    NotExecuted,
 
-        /// <remarks />
-        Disconnected,
+    /// <remarks />
+    Disconnected,
 
-        /// <remarks />
-        Warning,
+    /// <remarks />
+    Warning,
 
-        /// <remarks />
-        Passed,
+    /// <remarks />
+    Passed,
 
-        /// <remarks />
-        Completed,
+    /// <remarks />
+    Completed,
 
-        /// <remarks />
-        InProgress,
+    /// <remarks />
+    InProgress,
 
-        /// <remarks />
-        Pending
-    }
+    /// <remarks />
+    Pending
 }
