@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TrxToSonar": {
+      "commandName": "Project",
+      "commandLineArgs": "-d \"c:\\Users\\yurii.zhoholiev\\Downloads\\artifacts (3)\\results\" -o out.xml"
+    }
+  }
+}

@@ -1,16 +1,15 @@
 ﻿using System.Xml.Serialization;
 
-namespace TrxToSonar.Model.Trx
+namespace TrxToSonar.Model.Trx;
+
+public class TestMethod
 {
-    public class TestMethod
-    {
-        [XmlAttribute(AttributeName = "codeBase")]
-        public string CodeBase { get; set; }
+    [XmlAttribute(AttributeName = "codeBase")]
+    public string CodeBase { get; set; } = default!;
 
-        [XmlAttribute(AttributeName = "className")]
-        public string ClassName { get; set; }
+    [XmlAttribute(AttributeName = "className")]
+    public string? ClassName { get; set; }
 
-        [XmlAttribute(AttributeName = "name")]
-        public string Name { get; set; }
-    }
+    [XmlAttribute(AttributeName = "name")]
+    public string? Name { get; set; }
 }

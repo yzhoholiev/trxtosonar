@@ -1,23 +1,21 @@
-﻿using System.Collections.Generic;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 
-namespace TrxToSonar.Model.Sonar
+namespace TrxToSonar.Model.Sonar;
+
+public class File
 {
-    public class File
+    public File()
     {
-        public File()
-        {
-        }
-
-        public File(string path)
-        {
-            Path = path;
-        }
-
-        [XmlAttribute(AttributeName = "path")]
-        public string Path { get; set; }
-
-        [XmlElement("testCase")]
-        public List<TestCase> TestCases { get; set; } = new List<TestCase>();
     }
+
+    public File(string? path)
+    {
+        Path = path;
+    }
+
+    [XmlAttribute(AttributeName = "path")]
+    public string? Path { get; set; }
+
+    [XmlElement("testCase")]
+    public List<TestCase> TestCases { get; set; } = new();
 }

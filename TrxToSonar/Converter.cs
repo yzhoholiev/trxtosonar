@@ -1,117 +1,122 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using Microsoft.Extensions.Logging;
-using TrxToSonar.Model.Sonar;
+﻿using TrxToSonar.Model.Sonar;
 using TrxToSonar.Model.Trx;
 using File = TrxToSonar.Model.Sonar.File;
 
-namespace TrxToSonar
+namespace TrxToSonar;
+
+public sealed class Converter : IConverter
 {
-    public class Converter : IConverter
+    private readonly ILogger _logger;
+    private readonly XmlParser<SonarDocument> _sonarParser = new();
+    private readonly XmlParser<TrxDocument> _trxParser = new();
+
+    public Converter(ILogger<Converter> logger)
     {
-        private readonly ILogger _logger;
-        private readonly XmlParser<SonarDocument> _sonarParser = new XmlParser<SonarDocument>();
-        private readonly XmlParser<TrxDocument> _trxParser = new XmlParser<TrxDocument>();
+        _logger = logger;
+    }
 
-        public Converter(ILogger<Converter> logger)
+    public bool Save(SonarDocument sonarDocument, string outputFilename)
+    {
+        return _sonarParser.Save(sonarDocument, outputFilename);
+    }
+
+    public SonarDocument? Parse(string? solutionDirectory, bool useAbsolutePath)
+    {
+        if (string.IsNullOrEmpty(solutionDirectory) || !Directory.Exists(solutionDirectory))
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            return null;
         }
 
-        public bool Save(SonarDocument sonarDocument, string outputFilename)
-        {
-            return _sonarParser.Save(sonarDocument, outputFilename);
-        }
+        IEnumerable<string> trxFiles = Directory.EnumerateFiles(solutionDirectory, "*.trx", SearchOption.AllDirectories);
 
-        public SonarDocument Parse(string solutionDirectory, bool useAbsolutePath)
+        var sonarDocuments = new List<SonarDocument>();
+        foreach (string trxFile in trxFiles)
         {
-            if (string.IsNullOrEmpty(solutionDirectory) || !Directory.Exists(solutionDirectory))
+            _logger.LogInformation("Parsing: {TrxFileName}", trxFile);
+            TrxDocument? trxDocument = _trxParser.Deserialize(trxFile);
+            if (trxDocument is null)
             {
+                _logger.LogWarning("TRX document {TrxFileName} wasn't parsed", trxFile);
+                continue;
+            }
+
+            try
+            {
+                SonarDocument sonarDocument = Convert(trxDocument, solutionDirectory, useAbsolutePath);
+                sonarDocuments.Add(sonarDocument);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("TRX document {TrxFileName} parsing failed. Error: {Error}", trxFile, ex.Message);
                 return null;
             }
-
-            IEnumerable<string> trxFiles = Directory.EnumerateFiles(solutionDirectory, "*.trx", SearchOption.AllDirectories);
-
-            var sonarDocuments = new List<SonarDocument>();
-            foreach (string trxFile in trxFiles)
-            {
-                _logger.LogInformation($"Parsing: {trxFile}");
-                TrxDocument trxDocument = _trxParser.Deserialize(trxFile);
-                SonarDocument sonarDocument = Convert(trxDocument, solutionDirectory, useAbsolutePath);
-
-                if (sonarDocument != null)
-                {
-                    sonarDocuments.Add(sonarDocument);
-                }
-            }
-
-            // Merge
-            return Merge(sonarDocuments);
         }
 
-        private SonarDocument Merge(IReadOnlyList<SonarDocument> sonarDocuments)
+        // Merge
+        return Merge(sonarDocuments);
+    }
+
+    private SonarDocument Merge(IReadOnlyList<SonarDocument> sonarDocuments)
+    {
+        _logger.LogInformation("Merge {FilesCount} file(s).", sonarDocuments.Count);
+        if (sonarDocuments.Count == 1)
         {
-            _logger.LogInformation("Merge {0} file(s).", sonarDocuments.Count);
-            if (sonarDocuments.Count == 1)
-            {
-                return sonarDocuments[0];
-            }
-
-            var result = new SonarDocument();
-            foreach (SonarDocument sonarDocument in sonarDocuments)
-            foreach (File sonarFile in sonarDocument.Files)
-            {
-                result.Files.Add(sonarFile);
-            }
-
-            return result;
+            return sonarDocuments[0];
         }
 
-        private SonarDocument Convert(TrxDocument trxDocument, string solutionDirectory, bool useAbsolutePath)
+        var result = new SonarDocument();
+        foreach (File sonarFile in sonarDocuments.SelectMany(d => d.Files))
         {
-            var sonarDocument = new SonarDocument();
+            result.Files.Add(sonarFile);
+        }
 
-            foreach (UnitTestResult trxResult in trxDocument.Results)
+        return result;
+    }
+
+    private SonarDocument Convert(TrxDocument trxDocument, string solutionDirectory, bool useAbsolutePath)
+    {
+        var sonarDocument = new SonarDocument();
+
+        foreach (UnitTestResult trxResult in trxDocument.Results)
+        {
+            UnitTest? unitTest = trxResult.GetUnitTest(trxDocument);
+
+            string testFile = unitTest.GetTestFile(solutionDirectory, useAbsolutePath);
+
+            File? file = sonarDocument.GetFile(testFile);
+
+            if (file == null)
             {
-                UnitTest unitTest = trxResult.GetUnitTest(trxDocument);
+                file = new File(testFile);
+                sonarDocument.Files.Add(file);
+            }
 
-                string testFile = unitTest.GetTestFile(solutionDirectory, useAbsolutePath);
+            var testCase = new TestCase(trxResult.TestName, Utils.ToSonarDuration(trxResult.Duration));
 
-                File file = sonarDocument.GetFile(testFile);
-
-                if (file == null)
+            if (trxResult.Outcome != Outcome.Passed)
+            {
+                if (trxResult.Outcome == Outcome.NotExecuted)
                 {
-                    file = new File(testFile);
-                    sonarDocument.Files.Add(file);
-                }
-
-                var testCase = new TestCase(trxResult.TestName, Utils.ToSonarDuration(trxResult.Duration));
-
-                if (trxResult.Outcome != Outcome.Passed)
-                {
-                    if (trxResult.Outcome == Outcome.NotExecuted)
-                    {
-                        testCase.Skipped = new Skipped();
-                        _logger.LogInformation($"Skipped: {trxResult.TestName}");
-                    }
-                    else
-                    {
-                        testCase.Failure = new Failure(
-                            trxResult.Output?.ErrorInfo?.Message,
-                            trxResult.Output?.ErrorInfo?.StackTrace);
-                        _logger.LogInformation($"Failure: {trxResult.TestName}");
-                    }
+                    testCase.Skipped = new Skipped();
+                    _logger.LogInformation("Skipped: {TestName}", trxResult.TestName);
                 }
                 else
                 {
-                    _logger.LogInformation($"Passed: {trxResult.TestName}");
-                }
+                    testCase.Failure = new Failure(
+                        trxResult.Output?.ErrorInfo?.Message,
+                        trxResult.Output?.ErrorInfo?.StackTrace);
 
-                file.TestCases.Add(testCase);
+                    _logger.LogInformation("Failure: {TestName}", trxResult.TestName);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("Passed: {TestName}", trxResult.TestName);
             }
 
-            return sonarDocument;
+            file.TestCases.Add(testCase);
         }
+
+        return sonarDocument;
     }
 }

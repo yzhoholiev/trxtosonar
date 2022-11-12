@@ -1,12 +1,9 @@
-﻿using System;
+﻿namespace TrxToSonar;
 
-namespace TrxToSonar
+public static class Utils
 {
-    public static class Utils
+    public static long ToSonarDuration(string? trxDuration)
     {
-        public static long ToSonarDuration(string trxDuration)
-        {
-            return TimeSpan.TryParse(trxDuration, out TimeSpan result) ? (long) result.TotalMilliseconds : 0;
-        }
+        return TimeSpan.TryParse(trxDuration, out TimeSpan result) ? (long) result.TotalMilliseconds : 0;
     }
 }
