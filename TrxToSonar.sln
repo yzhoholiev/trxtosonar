@@ -3,16 +3,22 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrxToSonar", "TrxToSonar\TrxToSonar.csproj", "{6FE81698-76A2-4443-AC12-1C6D1B0494F3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrxToSonar", "src\TrxToSonar\TrxToSonar.csproj", "{6FE81698-76A2-4443-AC12-1C6D1B0494F3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrxToSonarTest", "TrxToSonarTest\TrxToSonarTest.csproj", "{03E44D82-F47C-4228-A92F-0B929EC19B0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrxToSonarTest", "tests\TrxToSonarTest\TrxToSonarTest.csproj", "{03E44D82-F47C-4228-A92F-0B929EC19B0C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{582AF07D-5B1B-43D4-88DC-573935EDBF36}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
 		README.md = README.md
+		stylecop.json = stylecop.json
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B74B1EC9-583D-4147-9F00-729EAFA4E0CA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{E62E9F0B-697F-4C78-B40A-DE5ABA7DF2CB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +37,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6FE81698-76A2-4443-AC12-1C6D1B0494F3} = {B74B1EC9-583D-4147-9F00-729EAFA4E0CA}
+		{03E44D82-F47C-4228-A92F-0B929EC19B0C} = {E62E9F0B-697F-4C78-B40A-DE5ABA7DF2CB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {010EF599-52FE-45FF-ACE8-EC6B5AB5C516}

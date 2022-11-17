@@ -11,6 +11,9 @@ nupkg/
 # Rider
 .idea
 
+# SpecFlow
+*.feature.cs
+
 # User-specific files
 *.suo
 *.user
