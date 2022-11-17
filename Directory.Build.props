@@ -1,0 +1,33 @@
+﻿<Project>
+
+  <PropertyGroup>
+    <Description>
+      Tool for converting TRX test results to the generic SonarQube format.
+    </Description>
+    <Authors>Yurii Zhoholiev</Authors>
+    <Copyright>2022</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GitVersion.MsBuild" Version="5.11.1"
+                      PrivateAssets="All"
+                      Condition="!Exists('packages.config')" />
+  </ItemGroup>
+
+  <!-- SourceLink configuration -->
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+  </ItemGroup>
+
+
+</Project>
