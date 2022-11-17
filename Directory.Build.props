@@ -18,10 +18,19 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <RunStyleCop Condition="'$(RunStyleCop)' == ''">true</RunStyleCop>
+    <RunSonarQube Condition="'$(RunSonarQube)' == ''">true</RunSonarQube>
+    <RunNetAnalyzers Condition="'$(RunNetAnalyzers)' == ''">true</RunNetAnalyzers>
+    <EnableNETAnalyzers>$(RunNetAnalyzers)</EnableNETAnalyzers>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <NoWarn>$(NoWarn);CA1014</NoWarn>
+    <SolutionDir Condition="'$(SolutionDir)' == ''">$(MSBuildThisFileDirectory)</SolutionDir>
+  </PropertyGroup>
+
+  <!-- Version calculation -->
   <ItemGroup>
-    <PackageReference Include="GitVersion.MsBuild" Version="5.11.1"
-                      PrivateAssets="All"
-                      Condition="!Exists('packages.config')" />
+    <PackageReference Include="GitVersion.MsBuild" Version="5.11.1" PrivateAssets="All" />
   </ItemGroup>
 
   <!-- SourceLink configuration -->
@@ -29,5 +38,21 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 
+  <!-- StyleCop Analyzers configuration -->
+  <ItemGroup Condition="'$(RunStyleCop)' == 'true'">
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <AdditionalFiles Include="$(SolutionDir)stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
+  <!-- SonarQube Analyzers configuration -->
+  <ItemGroup Condition="'$(RunSonarQube)' == 'true'">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.48.0.56517">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
 </Project>
