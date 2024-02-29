@@ -2,7 +2,7 @@
 
 namespace TrxToSonar.Model.Sonar;
 
-public class Failure
+public sealed class Failure
 {
     public Failure()
     {

@@ -2,7 +2,7 @@
 
 namespace TrxToSonar.Model.Sonar;
 
-public class File
+public sealed class File
 {
     public File()
     {
@@ -17,5 +17,5 @@ public class File
     public string? Path { get; set; }
 
     [XmlElement("testCase")]
-    public List<TestCase> TestCases { get; set; } = new();
+    public List<TestCase> TestCases { get; } = [];
 }

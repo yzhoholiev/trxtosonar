@@ -2,11 +2,10 @@
 using TrxToSonar;
 using TrxToSonar.Model.Sonar;
 
-using var app = new CommandLineApplication
-{
-    Name = "Trx To Sonar",
-    Description = ""
-};
+using var app = new CommandLineApplication();
+
+app.Name = "TRX To Sonar";
+app.Description = "";
 
 app.HelpOption("-?|-h|--help");
 
@@ -25,7 +24,7 @@ app.OnExecute(
         if (solutionDirectoryOption.HasValue() && outputOption.HasValue())
         {
             IConverter converter = serviceProvider.GetRequiredService<IConverter>();
-            SonarDocument? sonarDocument = converter.Parse(solutionDirectoryOption.Value()!, absolutePathOption.HasValue());
+            SonarDocument? sonarDocument = converter.Parse(solutionDirectoryOption.Value(), absolutePathOption.HasValue());
             if (sonarDocument is null)
             {
                 return 1;

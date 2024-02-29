@@ -2,7 +2,7 @@
 
 namespace TrxToSonar.Model.Sonar;
 
-public class Error
+public sealed class Error
 {
     [XmlAttribute(AttributeName = "message")]
     public string? Message { get; set; }

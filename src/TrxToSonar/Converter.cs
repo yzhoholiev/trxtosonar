@@ -4,16 +4,11 @@ using File = TrxToSonar.Model.Sonar.File;
 
 namespace TrxToSonar;
 
-public sealed class Converter : IConverter
+public sealed class Converter(ILogger<Converter> logger) : IConverter
 {
-    private readonly ILogger _logger;
+    private readonly ILogger _logger = logger;
     private readonly XmlParser<SonarDocument> _sonarParser = new();
     private readonly XmlParser<TrxDocument> _trxParser = new();
-
-    public Converter(ILogger<Converter> logger)
-    {
-        _logger = logger;
-    }
 
     public bool Save(SonarDocument sonarDocument, string outputFilename)
     {
@@ -24,6 +19,7 @@ public sealed class Converter : IConverter
     {
         if (string.IsNullOrEmpty(solutionDirectory) || !Directory.Exists(solutionDirectory))
         {
+            logger.LogError("Directory {SolutionDirectory} does not exists!", solutionDirectory);
             return null;
         }
 
@@ -47,7 +43,7 @@ public sealed class Converter : IConverter
             }
             catch (Exception ex)
             {
-                _logger.LogError("TRX document {TrxFileName} parsing failed. Error: {Error}", trxFile, ex.Message);
+                _logger.LogError(ex, "TRX document {TrxFileName} parsing failed. Error: {Error}", trxFile, ex.Message);
                 return null;
             }
         }
@@ -58,17 +54,14 @@ public sealed class Converter : IConverter
 
     private SonarDocument Merge(IReadOnlyList<SonarDocument> sonarDocuments)
     {
-        _logger.LogInformation("Merge {FilesCount} file(s).", sonarDocuments.Count);
+        _logger.LogInformation("Merge {FilesCount} file(s)", sonarDocuments.Count);
         if (sonarDocuments.Count == 1)
         {
             return sonarDocuments[0];
         }
 
         var result = new SonarDocument();
-        foreach (File sonarFile in sonarDocuments.SelectMany(d => d.Files))
-        {
-            result.Files.Add(sonarFile);
-        }
+        result.Files.AddRange(sonarDocuments.SelectMany(d => d.Files));
 
         return result;
     }
@@ -85,7 +78,7 @@ public sealed class Converter : IConverter
 
             File? file = sonarDocument.GetFile(testFile);
 
-            if (file == null)
+            if (file is null)
             {
                 file = new File(testFile);
                 sonarDocument.Files.Add(file);

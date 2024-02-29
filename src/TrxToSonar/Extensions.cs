@@ -8,7 +8,7 @@ namespace TrxToSonar;
 internal static class Extensions
 {
     private static readonly string[] SearchPatternFormats =
-    {
+    [
         "{0}.cs",
         "{0}Test.cs",
         "{0}Tests.cs",
@@ -16,18 +16,18 @@ internal static class Extensions
         "{0}Test.vb",
         "{0}Tests.vb",
         "{0}*"
-    };
+    ];
 
     private static readonly string TestProjectSignature = Path.Combine("Tests", "bin");
 
     public static UnitTest? GetUnitTest(this UnitTestResult unitTestResult, TrxDocument trxDocument)
     {
-        return trxDocument.TestDefinitions.FirstOrDefault(x => x.Id == unitTestResult.TestId);
+        return trxDocument.TestDefinitions.Find(x => x.Id == unitTestResult.TestId);
     }
 
     public static File? GetFile(this SonarDocument sonarDocument, string testFile)
     {
-        return sonarDocument.Files.FirstOrDefault(x => x.Path == testFile);
+        return sonarDocument.Files.Find(x => x.Path == testFile);
     }
 
     public static string GetTestFile(this UnitTest? unitTest, string solutionDirectory, bool useAbsolutePath)
