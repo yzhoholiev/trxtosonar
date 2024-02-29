@@ -7,11 +7,11 @@ public class TrxDocument
 {
     [XmlArray("Results")]
     [XmlArrayItem("UnitTestResult")]
-    public List<UnitTestResult> Results { get; set; } = new();
+    public List<UnitTestResult> Results { get; set; } = [];
 
     [XmlArray("TestDefinitions")]
     [XmlArrayItem("UnitTest")]
-    public List<UnitTest> TestDefinitions { get; set; } = new();
+    public List<UnitTest> TestDefinitions { get; set; } = [];
 
     [XmlElement(ElementName = "ResultSummary")]
     public ResultSummary? ResultSummary { get; set; }

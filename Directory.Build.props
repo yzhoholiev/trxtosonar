@@ -1,11 +1,11 @@
-﻿<Project>
+<Project>
 
   <PropertyGroup>
     <Description>
       Tool for converting TRX test results to the generic SonarQube format.
     </Description>
     <Authors>Yurii Zhoholiev</Authors>
-    <Copyright>2022</Copyright>
+    <Copyright>2022-2024</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -30,17 +30,12 @@
 
   <!-- Version calculation -->
   <ItemGroup>
-    <PackageReference Include="GitVersion.MsBuild" Version="5.11.1" PrivateAssets="All" />
-  </ItemGroup>
-
-  <!-- SourceLink configuration -->
-  <ItemGroup Condition="'$(IsPackable)' == 'true'">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+    <PackageReference Include="GitVersion.MsBuild" PrivateAssets="All" />
   </ItemGroup>
 
   <!-- StyleCop Analyzers configuration -->
   <ItemGroup Condition="'$(RunStyleCop)' == 'true'">
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
+    <PackageReference Include="StyleCop.Analyzers">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
@@ -49,7 +44,7 @@
 
   <!-- SonarQube Analyzers configuration -->
   <ItemGroup Condition="'$(RunSonarQube)' == 'true'">
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.48.0.56517">
+    <PackageReference Include="SonarAnalyzer.CSharp">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>

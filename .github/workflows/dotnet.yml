@@ -6,28 +6,27 @@ on:
       - main
       - master
       - release/**
+    tags:
+      - v*
   pull_request:
     branches:
       - main
       - master
       - release/**
   workflow_dispatch:
-  create:
-    tags:
-      - v*
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "7.0.x"
+          dotnet-version: "8.0.x"
       - name: Install dependencies
         run: dotnet restore
       - name: Test
@@ -35,7 +34,7 @@ jobs:
       - name: Build
         run: dotnet pack --configuration Release --no-restore --output artifacts
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artifactsithub
           path: artifacts/*

@@ -2,7 +2,7 @@
 
 namespace TrxToSonar.Model.Sonar;
 
-public class Skipped
+public sealed class Skipped
 {
     [XmlAttribute(AttributeName = "message")]
     public string Message { get; set; } = "Skipped";

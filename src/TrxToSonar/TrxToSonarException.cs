@@ -1,8 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿namespace TrxToSonar;
 
-namespace TrxToSonar;
-
-[Serializable]
 public class TrxToSonarException : Exception
 {
     public TrxToSonarException(string message)
@@ -16,11 +13,6 @@ public class TrxToSonarException : Exception
     }
 
     public TrxToSonarException()
-    {
-    }
-
-    protected TrxToSonarException(SerializationInfo serializationInfo, StreamingContext streamingContext)
-        : base(serializationInfo, streamingContext)
     {
     }
 }
