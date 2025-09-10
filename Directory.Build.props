@@ -5,7 +5,7 @@
       Tool for converting TRX test results to the generic SonarQube format.
     </Description>
     <Authors>Yurii Zhoholiev</Authors>
-    <Copyright>2022-2024</Copyright>
+    <Copyright>2022-2025</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
