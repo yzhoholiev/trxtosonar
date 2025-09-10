@@ -6,7 +6,6 @@ namespace TrxToSonar;
 
 public sealed class Converter(ILogger<Converter> logger) : IConverter
 {
-    private readonly ILogger _logger = logger;
     private readonly XmlParser<SonarDocument> _sonarParser = new();
     private readonly XmlParser<TrxDocument> _trxParser = new();
 
@@ -28,11 +27,11 @@ public sealed class Converter(ILogger<Converter> logger) : IConverter
         var sonarDocuments = new List<SonarDocument>();
         foreach (string trxFile in trxFiles)
         {
-            _logger.LogInformation("Parsing: {TrxFileName}", trxFile);
+            logger.LogInformation("Parsing: {TrxFileName}", trxFile);
             TrxDocument? trxDocument = _trxParser.Deserialize(trxFile);
             if (trxDocument is null)
             {
-                _logger.LogWarning("TRX document {TrxFileName} wasn't parsed", trxFile);
+                logger.LogWarning("TRX document {TrxFileName} wasn't parsed", trxFile);
                 continue;
             }
 
@@ -43,7 +42,7 @@ public sealed class Converter(ILogger<Converter> logger) : IConverter
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "TRX document {TrxFileName} parsing failed. Error: {Error}", trxFile, ex.Message);
+                logger.LogError(ex, "TRX document {TrxFileName} parsing failed. Error: {Error}", trxFile, ex.Message);
                 return null;
             }
         }
@@ -52,9 +51,9 @@ public sealed class Converter(ILogger<Converter> logger) : IConverter
         return Merge(sonarDocuments);
     }
 
-    private SonarDocument Merge(IReadOnlyList<SonarDocument> sonarDocuments)
+    private SonarDocument Merge(List<SonarDocument> sonarDocuments)
     {
-        _logger.LogInformation("Merge {FilesCount} file(s)", sonarDocuments.Count);
+        logger.LogInformation("Merge {FilesCount} file(s)", sonarDocuments.Count);
         if (sonarDocuments.Count == 1)
         {
             return sonarDocuments[0];
@@ -91,7 +90,7 @@ public sealed class Converter(ILogger<Converter> logger) : IConverter
                 if (trxResult.Outcome == Outcome.NotExecuted)
                 {
                     testCase.Skipped = new Skipped();
-                    _logger.LogInformation("Skipped: {TestName}", trxResult.TestName);
+                    logger.LogInformation("Skipped: {TestName}", trxResult.TestName);
                 }
                 else
                 {
@@ -99,12 +98,12 @@ public sealed class Converter(ILogger<Converter> logger) : IConverter
                         trxResult.Output?.ErrorInfo?.Message,
                         trxResult.Output?.ErrorInfo?.StackTrace);
 
-                    _logger.LogInformation("Failure: {TestName}", trxResult.TestName);
+                    logger.LogInformation("Failure: {TestName}", trxResult.TestName);
                 }
             }
             else
             {
-                _logger.LogInformation("Passed: {TestName}", trxResult.TestName);
+                logger.LogInformation("Passed: {TestName}", trxResult.TestName);
             }
 
             file.TestCases.Add(testCase);
