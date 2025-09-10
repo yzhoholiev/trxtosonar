@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="README.md" />
+    <File Path="stylecop.json" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/TrxToSonar/TrxToSonar.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TrxToSonarTest/TrxToSonarTest.csproj" />
+  </Folder>
+</Solution>

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using TrxToSonar.Model.Sonar;
 using TrxToSonar.Model.Trx;
 using File = TrxToSonar.Model.Sonar.File;

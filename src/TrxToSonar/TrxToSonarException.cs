@@ -1,6 +1,6 @@
 ﻿namespace TrxToSonar;
 
-public class TrxToSonarException : Exception
+public sealed class TrxToSonarException : Exception
 {
     public TrxToSonarException(string message)
         : base(message)
