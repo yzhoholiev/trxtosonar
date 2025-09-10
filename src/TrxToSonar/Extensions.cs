@@ -39,17 +39,12 @@ internal static class Extensions
             throw new TrxToSonarException("Class name was not provided");
         }
 
-        string className = fullClassName.Split(".", StringSplitOptions.RemoveEmptyEntries)[^1];
+        string className = GetClassName(fullClassName);
 
         int indexOfSignature = unitTest!.TestMethod!.CodeBase.IndexOf(TestProjectSignature, StringComparison.OrdinalIgnoreCase);
         string projectDirectory = unitTest.TestMethod.CodeBase[..(indexOfSignature + 6)];
 
-        string? file =
-            SearchPatternFormats.Select(format => string.Format(CultureInfo.InvariantCulture, format, className))
-                .Select(searchPattern => Directory.GetFiles(projectDirectory, searchPattern, SearchOption.AllDirectories))
-                .Where(files => files.Length > 0)
-                .Select(files => files[0])
-                .FirstOrDefault();
+        string? file = FindFileInDirectory(projectDirectory, className);
 
         if (string.IsNullOrEmpty(file))
         {
@@ -62,5 +57,27 @@ internal static class Extensions
         }
 
         return file;
+    }
+
+    private static string GetClassName(string fullClassName)
+    {
+        int lastDotIndex = fullClassName.LastIndexOf('.');
+        return lastDotIndex >= 0 ? fullClassName[(lastDotIndex + 1)..] : fullClassName;
+    }
+
+    private static string? FindFileInDirectory(string projectDirectory, string className)
+    {
+        foreach (string pattern in SearchPatternFormats)
+        {
+            string searchPattern = string.Format(CultureInfo.InvariantCulture, pattern, className);
+            string[] files = Directory.GetFiles(projectDirectory, searchPattern, SearchOption.AllDirectories);
+
+            if (files.Length > 0)
+            {
+                return files[0];
+            }
+        }
+
+        return null;
     }
 }

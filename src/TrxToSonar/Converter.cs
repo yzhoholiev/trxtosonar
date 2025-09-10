@@ -1,4 +1,5 @@
-﻿using TrxToSonar.Model.Sonar;
+using System.Diagnostics.CodeAnalysis;
+using TrxToSonar.Model.Sonar;
 using TrxToSonar.Model.Trx;
 using File = TrxToSonar.Model.Sonar.File;
 
@@ -73,42 +74,68 @@ public sealed class Converter(ILogger<Converter> logger) : IConverter
         {
             UnitTest? unitTest = trxResult.GetUnitTest(trxDocument);
 
-            string testFile = unitTest.GetTestFile(solutionDirectory, useAbsolutePath);
-
-            File? file = sonarDocument.GetFile(testFile);
-
-            if (file is null)
+            if (!TryGetTestFile(unitTest, solutionDirectory, useAbsolutePath, trxResult.TestName, out string? testFile))
             {
-                file = new File(testFile);
-                sonarDocument.Files.Add(file);
+                continue;
             }
 
-            var testCase = new TestCase(trxResult.TestName, Utils.ToSonarDuration(trxResult.Duration));
-
-            if (trxResult.Outcome != Outcome.Passed)
-            {
-                if (trxResult.Outcome == Outcome.NotExecuted)
-                {
-                    testCase.Skipped = new Skipped();
-                    logger.LogInformation("Skipped: {TestName}", trxResult.TestName);
-                }
-                else
-                {
-                    testCase.Failure = new Failure(
-                        trxResult.Output?.ErrorInfo?.Message,
-                        trxResult.Output?.ErrorInfo?.StackTrace);
-
-                    logger.LogInformation("Failure: {TestName}", trxResult.TestName);
-                }
-            }
-            else
-            {
-                logger.LogInformation("Passed: {TestName}", trxResult.TestName);
-            }
-
+            File file = GetOrAddFile(sonarDocument, testFile);
+            TestCase testCase = CreateTestCase(trxResult);
             file.TestCases.Add(testCase);
         }
 
         return sonarDocument;
+    }
+
+    private TestCase CreateTestCase(UnitTestResult trxResult)
+    {
+        var testCase = new TestCase(trxResult.TestName, Utils.ToSonarDuration(trxResult.Duration));
+
+        switch (trxResult.Outcome)
+        {
+            case Outcome.Passed:
+                logger.LogInformation("Passed: {TestName}", trxResult.TestName);
+                break;
+            case Outcome.NotExecuted:
+                testCase.Skipped = new Skipped();
+                logger.LogInformation("Skipped: {TestName}", trxResult.TestName);
+                break;
+            default:
+                testCase.Failure = new Failure(trxResult.Output?.ErrorInfo?.Message, trxResult.Output?.ErrorInfo?.StackTrace);
+                logger.LogInformation("Failure: {TestName}", trxResult.TestName);
+                break;
+        }
+
+        return testCase;
+    }
+
+    private static File GetOrAddFile(SonarDocument sonarDocument, string testFile)
+    {
+        File? file = sonarDocument.GetFile(testFile);
+
+        if (file is not null)
+        {
+            return file;
+        }
+
+        file = new File(testFile);
+        sonarDocument.Files.Add(file);
+
+        return file;
+    }
+
+    private bool TryGetTestFile(UnitTest? unitTest, string solutionDirectory, bool useAbsolutePath, string? testName, [NotNullWhen(true)] out string? testFile)
+    {
+        testFile = null;
+        try
+        {
+            testFile = unitTest.GetTestFile(solutionDirectory, useAbsolutePath);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to get test file for test {TestName}. Error: {Error}", testName, ex.Message);
+            return false;
+        }
     }
 }

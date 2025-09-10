@@ -1,11 +1,11 @@
-﻿using System.Xml.Serialization;
+using System.Xml.Serialization;
 
 namespace TrxToSonar.Model.Trx;
 
 public class TestMethod
 {
     [XmlAttribute(AttributeName = "codeBase")]
-    public string CodeBase { get; set; } = default!;
+    public string CodeBase { get; set; } = null!;
 
     [XmlAttribute(AttributeName = "className")]
     public string? ClassName { get; set; }
