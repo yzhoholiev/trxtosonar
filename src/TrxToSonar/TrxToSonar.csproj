@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0</TargetFrameworks>
@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.XmlSerializer.Generator" />
     <PackageReference Include="Serilog.Extensions.Hosting" />
     <PackageReference Include="System.CommandLine" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
@@ -17,6 +18,10 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Console" />
     <PackageReference Include="Serilog.Sinks.Async" />
     <PackageReference Include="Serilog.Sinks.Console" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.XmlSerializer.Generator" Version="9.0.9" />
   </ItemGroup>
 
 </Project>
