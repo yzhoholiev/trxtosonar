@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="TrxToSonarTest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.XmlSerializer.Generator" />
     <PackageReference Include="Serilog.Extensions.Hosting" />
     <PackageReference Include="System.CommandLine" />

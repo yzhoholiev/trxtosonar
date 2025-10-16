@@ -106,8 +106,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Original project by [gregoryb](https://github.com/gregoryb/trxtosonar)
 - Maintained by [Yurii Zhoholiev](https://github.com/yzhoholiev)
-
-## TODO
-
-- Add more comprehensive tests
-- Support for additional test result formats

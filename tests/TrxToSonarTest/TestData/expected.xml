@@ -1,0 +1,13 @@
+<testExecutions version="1">
+  <file path="Tests\MyTests.cs">
+    <testCase name="PassedTest" duration="5" />
+    <testCase name="FailedTest" duration="10">
+      <failure message="Test failed: Expected value was 42 but got 0">
+        <stackTrace>   at MyNamespace.MyTests.FailedTest() in C:\Projects\Tests\MyTests.cs:line 25</stackTrace>
+      </failure>
+    </testCase>
+    <testCase name="SkippedTest" duration="0">
+      <skipped />
+    </testCase>
+  </file>
+</testExecutions>
