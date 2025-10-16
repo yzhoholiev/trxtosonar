@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.Globalization;
+using System.Reflection;
 using Serilog;
 using TrxToSonar;
 using TrxToSonar.Model.Sonar;
@@ -12,6 +13,15 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
+    // Display logo and version unless --no-logo or --help is specified
+    bool noLogo = args.Contains("--no-logo");
+    bool isHelp = args.Contains("--help") || args.Contains("-h") || args.Contains("-?");
+
+    if (!noLogo && !isHelp)
+    {
+        PrintLogo();
+    }
+
     // Create command line options
     var solutionDirectoryOption = new Option<DirectoryInfo>("--directory", "-d")
     {
@@ -30,12 +40,18 @@ try
         Description = "Use absolute path"
     };
 
+    var noLogoOption = new Option<bool>("--no-logo")
+    {
+        Description = "Suppress logo and version information"
+    };
+
     // Create root command
-    var rootCommand = new RootCommand("TRX To Sonar")
+    var rootCommand = new RootCommand("Converts TRX test result files to SonarQube Generic Test Data format")
     {
         solutionDirectoryOption,
         outputOption,
-        absolutePathOption
+        absolutePathOption,
+        noLogoOption
     };
 
     // Set command handler
@@ -90,4 +106,29 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
+}
+
+static void PrintLogo()
+{
+    var assembly = Assembly.GetExecutingAssembly();
+    string version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                     ?? assembly.GetName().Version?.ToString()
+                     ?? "Unknown";
+
+    const int maxVersionLength = 43;
+    if (version.Length > maxVersionLength)
+    {
+        version = version[..(maxVersionLength - 3)] + "...";
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("╔═══════════════════════════════════════════════════════════════╗");
+    Console.WriteLine("║                                                               ║");
+    Console.WriteLine("║                   TRX to Sonar Converter                      ║");
+    Console.WriteLine("║                                                               ║");
+    Console.WriteLine($"║          Version: {version,-maxVersionLength} ║");
+    Console.WriteLine("║          Copyright (c) 2022-2025 Yurii Zhoholiev              ║");
+    Console.WriteLine("║                                                               ║");
+    Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝");
+    Console.WriteLine();
 }
