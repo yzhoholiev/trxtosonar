@@ -12,7 +12,7 @@ public class XmlParserTests
     public void Serialize_WithValidSonarDocument_ReturnsXmlString()
     {
         // Arrange
-        var parser = new XmlParser<SonarDocument>();
+
         var document = new SonarDocument();
         document.Files.Add(new File("test.cs"));
         string outputFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xml");
@@ -20,7 +20,7 @@ public class XmlParserTests
         try
         {
             // Act
-            bool result = parser.Save(document, outputFile);
+            bool result = XmlParser<SonarDocument>.Save(document, outputFile);
 
             // Assert
             Assert.True(result);
@@ -43,7 +43,7 @@ public class XmlParserTests
     public void Deserialize_WithValidXmlFile_ReturnsSonarDocument()
     {
         // Arrange
-        var parser = new XmlParser<SonarDocument>();
+
         string xmlContent = """
                             <testExecutions version="1">
                               <file path="test.cs">
@@ -57,7 +57,7 @@ public class XmlParserTests
         try
         {
             // Act
-            SonarDocument? result = parser.Deserialize(tempFile);
+            SonarDocument? result = XmlParser<SonarDocument>.Deserialize(tempFile);
 
             // Assert
             Assert.NotNull(result);
@@ -79,7 +79,7 @@ public class XmlParserTests
     public void Save_DeletesExistingFile()
     {
         // Arrange
-        var parser = new XmlParser<SonarDocument>();
+
         var document = new SonarDocument();
         string outputFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xml");
         IOFile.WriteAllText(outputFile, "old content");
@@ -87,7 +87,7 @@ public class XmlParserTests
         try
         {
             // Act
-            bool result = parser.Save(document, outputFile);
+            bool result = XmlParser<SonarDocument>.Save(document, outputFile);
 
             // Assert
             Assert.True(result);
@@ -108,7 +108,7 @@ public class XmlParserTests
     public void Save_CreatesDirectoryIfNotExists()
     {
         // Arrange
-        var parser = new XmlParser<SonarDocument>();
+
         var document = new SonarDocument();
         string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         string outputFile = Path.Combine(tempDir, "output.xml");
@@ -116,7 +116,7 @@ public class XmlParserTests
         try
         {
             // Act
-            bool result = parser.Save(document, outputFile);
+            bool result = XmlParser<SonarDocument>.Save(document, outputFile);
 
             // Assert
             Assert.True(result);
@@ -137,14 +137,14 @@ public class XmlParserTests
     public void Serialize_OmitsXmlDeclaration()
     {
         // Arrange
-        var parser = new XmlParser<SonarDocument>();
+
         var document = new SonarDocument();
         string outputFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xml");
 
         try
         {
             // Act
-            parser.Save(document, outputFile);
+            XmlParser<SonarDocument>.Save(document, outputFile);
             string content = IOFile.ReadAllText(outputFile);
 
             // Assert
@@ -164,7 +164,7 @@ public class XmlParserTests
     public void Serialize_HasIndentation()
     {
         // Arrange
-        var parser = new XmlParser<SonarDocument>();
+
         var document = new SonarDocument();
         document.Files.Add(new File("test.cs"));
         string outputFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xml");
@@ -172,7 +172,7 @@ public class XmlParserTests
         try
         {
             // Act
-            parser.Save(document, outputFile);
+            XmlParser<SonarDocument>.Save(document, outputFile);
             string content = IOFile.ReadAllText(outputFile);
 
             // Assert

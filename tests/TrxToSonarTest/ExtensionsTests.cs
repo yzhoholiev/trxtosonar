@@ -341,7 +341,7 @@ public class ExtensionsTests
             };
 
             // Act
-            string result = unitTest.GetTestFile(tempDir, useAbsolutePath: false);
+            string result = unitTest.GetTestFile(tempDir, false);
 
             // Assert
             Assert.Equal(Path.Combine("Tests", "TestClass.cs"), result);

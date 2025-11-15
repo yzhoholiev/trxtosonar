@@ -10,12 +10,16 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
 
   <PropertyGroup>
+    <LangVersion>14.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
-    <IsPackable>false</IsPackable>
+    <IsPackable Condition="'$(IsTestProject)' == 'true'">false</IsPackable>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -23,7 +27,8 @@
     <RunSonarQube Condition="'$(RunSonarQube)' == ''">true</RunSonarQube>
     <RunNetAnalyzers Condition="'$(RunNetAnalyzers)' == ''">true</RunNetAnalyzers>
     <EnableNETAnalyzers>$(RunNetAnalyzers)</EnableNETAnalyzers>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <AnalysisMode>All</AnalysisMode>
     <NoWarn>$(NoWarn);CA1014</NoWarn>
     <SolutionDir Condition="'$(SolutionDir)' == ''">$(MSBuildThisFileDirectory)</SolutionDir>
   </PropertyGroup>

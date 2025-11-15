@@ -42,6 +42,11 @@ internal static class Extensions
         string className = GetClassName(fullClassName);
 
         int indexOfSignature = unitTest!.TestMethod!.CodeBase.IndexOf(TestProjectSignature, StringComparison.OrdinalIgnoreCase);
+        if (indexOfSignature < 0)
+        {
+            throw new TrxToSonarException($"Could not find test project signature '{TestProjectSignature}' in code base path: {unitTest.TestMethod.CodeBase}");
+        }
+
         string projectDirectory = unitTest.TestMethod.CodeBase[..(indexOfSignature + 6)];
 
         string? file = FindFileInDirectory(projectDirectory, className);
@@ -70,11 +75,19 @@ internal static class Extensions
         foreach (string pattern in SearchPatternFormats)
         {
             string searchPattern = string.Format(CultureInfo.InvariantCulture, pattern, className);
-            string[] files = Directory.GetFiles(projectDirectory, searchPattern, SearchOption.AllDirectories);
+            string? firstFile = Directory.EnumerateFiles(
+                    projectDirectory,
+                    searchPattern,
+                    new EnumerationOptions
+                    {
+                        RecurseSubdirectories = true,
+                        MatchCasing = MatchCasing.CaseInsensitive
+                    })
+                .FirstOrDefault();
 
-            if (files.Length > 0)
+            if (firstFile is not null)
             {
-                return files[0];
+                return firstFile;
             }
         }
 

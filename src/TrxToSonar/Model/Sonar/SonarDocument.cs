@@ -10,5 +10,5 @@ public class SonarDocument
     public int Version { get; set; } = 1;
 
     [XmlElement(ElementName = "file")]
-    public List<File> Files { get; set; } = [];
+    public List<File> Files { get; } = [];
 }
