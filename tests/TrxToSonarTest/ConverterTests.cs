@@ -11,57 +11,48 @@ public class ConverterTests
     private readonly Converter _converter = new(NullLogger<Converter>.Instance);
 
     [Fact]
-    public void Parse_WithNullDirectory_ReturnsNull()
+    public void Parse_WithNullDirectory_ReturnsNullDocument()
     {
-        // Act
-        SonarDocument? result = _converter.Parse(null, false);
+        ConversionResult result = _converter.Parse(null, false);
 
-        // Assert
-        Assert.Null(result);
+        Assert.Null(result.Document);
+        Assert.Equal(0, result.TrxFileCount);
     }
 
     [Fact]
-    public void Parse_WithEmptyDirectory_ReturnsNull()
+    public void Parse_WithEmptyDirectory_ReturnsNullDocument()
     {
-        // Act
-        SonarDocument? result = _converter.Parse(string.Empty, false);
+        ConversionResult result = _converter.Parse(string.Empty, false);
 
-        // Assert
-        Assert.Null(result);
+        Assert.Null(result.Document);
     }
 
     [Fact]
-    public void Parse_WithNonExistentDirectory_ReturnsNull()
+    public void Parse_WithNonExistentDirectory_ReturnsNullDocument()
     {
-        // Arrange
         string nonExistentDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
-        // Act
-        SonarDocument? result = _converter.Parse(nonExistentDir, false);
+        ConversionResult result = _converter.Parse(nonExistentDir, false);
 
-        // Assert
-        Assert.Null(result);
+        Assert.Null(result.Document);
     }
 
     [Fact]
     public void Parse_WithDirectoryWithoutTrxFiles_ReturnsEmptySonarDocument()
     {
-        // Arrange
         string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            // Act
-            SonarDocument? result = _converter.Parse(tempDir, false);
+            ConversionResult result = _converter.Parse(tempDir, false);
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.Empty(result.Files);
+            Assert.NotNull(result.Document);
+            Assert.Empty(result.Document.Files);
+            Assert.Equal(0, result.TrxFileCount);
         }
         finally
         {
-            // Cleanup
             if (Directory.Exists(tempDir))
             {
                 Directory.Delete(tempDir, true);
@@ -79,7 +70,7 @@ public class ConverterTests
         try
         {
             // Act
-            bool result = _converter.Save(sonarDocument, outputFile);
+            bool result = Converter.Save(sonarDocument, outputFile);
 
             // Assert
             Assert.True(result);
@@ -108,7 +99,7 @@ public class ConverterTests
             IOFile.WriteAllText(outputFile, "initial content");
 
             // Act
-            bool result = _converter.Save(sonarDocument, outputFile);
+            bool result = Converter.Save(sonarDocument, outputFile);
 
             // Assert
             Assert.True(result);
@@ -138,7 +129,7 @@ public class ConverterTests
         try
         {
             // Act
-            bool result = _converter.Save(sonarDocument, outputFile);
+            bool result = Converter.Save(sonarDocument, outputFile);
 
             // Assert
             Assert.True(result);

@@ -44,13 +44,13 @@ public class XmlParserTests
     {
         // Arrange
 
-        string xmlContent = """
-                            <testExecutions version="1">
-                              <file path="test.cs">
-                                <testCase name="TestMethod1" duration="100" />
-                              </file>
-                            </testExecutions>
-                            """;
+        const string xmlContent = """
+                                  <testExecutions version="1">
+                                    <file path="test.cs">
+                                      <testCase name="TestMethod1" duration="100" />
+                                    </file>
+                                  </testExecutions>
+                                  """;
         string tempFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xml");
         IOFile.WriteAllText(tempFile, xmlContent);
 
