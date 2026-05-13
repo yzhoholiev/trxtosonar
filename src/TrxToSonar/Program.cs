@@ -1,14 +1,17 @@
 using System.CommandLine;
 using System.Globalization;
-using System.Reflection;
 using Serilog;
+using Serilog.Core;
+using Serilog.Events;
+using Serilog.Extensions.Logging;
 using TrxToSonar;
-using TrxToSonar.Model.Sonar;
 
-// Configure Serilog
+// Configure Serilog. Level is controlled by the --verbosity flag below.
+var levelSwitch = new LoggingLevelSwitch();
 Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.ControlledBy(levelSwitch)
     .Enrich.FromLogContext()
-    .WriteTo.Async(config => config.Console(formatProvider: CultureInfo.InvariantCulture, applyThemeToRedirectedOutput: true))
+    .WriteTo.Async(sinks => sinks.Console(formatProvider: CultureInfo.InvariantCulture, applyThemeToRedirectedOutput: false))
     .CreateLogger();
 
 try
@@ -19,7 +22,7 @@ try
 
     if (!noLogo && !isHelp)
     {
-        PrintLogo();
+        ConsoleOutput.WriteLogo();
     }
 
     // Create command line options
@@ -45,13 +48,20 @@ try
         Description = "Suppress logo and version information"
     };
 
+    var verbosityOption = new Option<Verbosity>("--verbosity")
+    {
+        Description = "Set log verbosity: Quiet | Minimal | Normal | Detailed | Diagnostic (default: Normal)",
+        DefaultValueFactory = _ => Verbosity.Normal
+    };
+
     // Create root command
     var rootCommand = new RootCommand("Converts TRX test result files to SonarQube Generic Test Data format")
     {
         solutionDirectoryOption,
         outputOption,
         absolutePathOption,
-        noLogoOption
+        noLogoOption,
+        verbosityOption
     };
 
     // Set command handler
@@ -59,31 +69,22 @@ try
     {
         try
         {
-            // Create and configure host
-            HostApplicationBuilder builder = Host.CreateApplicationBuilder();
-            builder.Services.AddSerilog(dispose: true);
-            builder.Services.AddSingleton<IConverter, Converter>();
-
-            using IHost host = builder.Build();
-
-            // Get options values
             DirectoryInfo solutionDir = parseResult.GetRequiredValue(solutionDirectoryOption);
             FileInfo output = parseResult.GetRequiredValue(outputOption);
             bool useAbsolute = parseResult.GetValue(absolutePathOption);
+            levelSwitch.MinimumLevel = MapVerbosity(parseResult.GetValue(verbosityOption));
 
-            // Get converter service
-            IConverter converter = host.Services.GetRequiredService<IConverter>();
+            using var loggerFactory = new SerilogLoggerFactory(Log.Logger);
+            var converter = new Converter(loggerFactory.CreateLogger<Converter>());
 
-            // Parse TRX files
-            SonarDocument? sonarDocument = converter.Parse(solutionDir.FullName, useAbsolute);
-
-            if (sonarDocument is null)
+            ConversionResult result = converter.Parse(solutionDir.FullName, useAbsolute);
+            ConsoleOutput.WriteSummary(result);
+            if (result.Document is null)
             {
                 return 1;
             }
 
-            // Save output
-            converter.Save(sonarDocument, output.FullName);
+            Converter.Save(result.Document, output.FullName);
         }
         catch (Exception ex)
         {
@@ -108,27 +109,15 @@ finally
     await Log.CloseAndFlushAsync();
 }
 
-static void PrintLogo()
+static LogEventLevel MapVerbosity(Verbosity verbosity)
 {
-    var assembly = Assembly.GetExecutingAssembly();
-    string version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-                     ?? assembly.GetName().Version?.ToString()
-                     ?? "Unknown";
-
-    const int maxVersionLength = 43;
-    if (version.Length > maxVersionLength)
+    return verbosity switch
     {
-        version = version[..(maxVersionLength - 3)] + "...";
-    }
-
-    Console.WriteLine();
-    Console.WriteLine("╔═══════════════════════════════════════════════════════════════╗");
-    Console.WriteLine("║                                                               ║");
-    Console.WriteLine("║                   TRX to Sonar Converter                      ║");
-    Console.WriteLine("║                                                               ║");
-    Console.WriteLine($"║          Version: {version,-maxVersionLength} ║");
-    Console.WriteLine("║          Copyright (c) 2022-2025 Yurii Zhoholiev              ║");
-    Console.WriteLine("║                                                               ║");
-    Console.WriteLine("╚═══════════════════════════════════════════════════════════════╝");
-    Console.WriteLine();
+        Verbosity.Quiet => LogEventLevel.Error,
+        Verbosity.Minimal => LogEventLevel.Warning,
+        Verbosity.Normal => LogEventLevel.Information,
+        Verbosity.Detailed => LogEventLevel.Debug,
+        Verbosity.Diagnostic => LogEventLevel.Verbose,
+        _ => LogEventLevel.Information
+    };
 }

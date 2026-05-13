@@ -6,19 +6,19 @@ using File = TrxToSonar.Model.Sonar.File;
 
 namespace TrxToSonar;
 
-internal sealed partial class Converter(ILogger<Converter> logger) : IConverter
+internal sealed partial class Converter(ILogger<Converter> logger)
 {
-    public bool Save(SonarDocument sonarDocument, string outputFilename)
+    public static bool Save(SonarDocument sonarDocument, string outputFilename)
     {
         return XmlParser<SonarDocument>.Save(sonarDocument, outputFilename);
     }
 
-    public SonarDocument? Parse(string? solutionDirectory, bool useAbsolutePath)
+    public ConversionResult Parse(string? solutionDirectory, bool useAbsolutePath)
     {
         if (string.IsNullOrEmpty(solutionDirectory) || !Directory.Exists(solutionDirectory))
         {
             LogDirectoryNotExists(solutionDirectory);
-            return null;
+            return new ConversionResult(null, 0, 0, 0, 0, 0, 0);
         }
 
         IEnumerable<string> trxFiles = Directory.EnumerateFiles(
@@ -26,10 +26,14 @@ internal sealed partial class Converter(ILogger<Converter> logger) : IConverter
             "*.trx",
             new EnumerationOptions { RecurseSubdirectories = true });
 
+        var resolver = new TestFileResolver(solutionDirectory, useAbsolutePath);
         List<SonarDocument> sonarDocuments = [];
+        int trxCount = 0;
+        int unresolved = 0;
         foreach (string trxFile in trxFiles)
         {
             LogParsingFile(trxFile);
+            trxCount++;
 
             try
             {
@@ -40,8 +44,9 @@ internal sealed partial class Converter(ILogger<Converter> logger) : IConverter
                     continue;
                 }
 
-                SonarDocument sonarDocument = Convert(trxDocument, solutionDirectory, useAbsolutePath);
-                sonarDocuments.Add(sonarDocument);
+                (SonarDocument doc, int convertUnresolved) = Convert(trxDocument, resolver);
+                sonarDocuments.Add(doc);
+                unresolved += convertUnresolved;
             }
             catch (TrxToSonarException ex) when (ex.InnerException is XmlException)
             {
@@ -49,16 +54,17 @@ internal sealed partial class Converter(ILogger<Converter> logger) : IConverter
             }
             catch (Exception ex)
             {
-                LogParsingFailed(ex, trxFile, ex.Message);
-                return null;
+                LogParsingFailed(ex, trxFile);
+                return new ConversionResult(null, trxCount, 0, 0, 0, 0, unresolved);
             }
         }
 
-        // Merge
-        return Merge(sonarDocuments);
+        SonarDocument merged = Merge(sonarDocuments);
+        (int passed, int skipped, int failed, int errored) = CountOutcomes(merged);
+        return new ConversionResult(merged, trxCount, passed, skipped, failed, errored, unresolved);
     }
 
-    [LoggerMessage(LogLevel.Error, "Directory {SolutionDirectory} does not exists!")]
+    [LoggerMessage(LogLevel.Error, "Directory does not exist: {SolutionDirectory}")]
     private partial void LogDirectoryNotExists(string? solutionDirectory);
 
     [LoggerMessage(LogLevel.Information, "Parsing: {TrxFileName}")]
@@ -70,26 +76,29 @@ internal sealed partial class Converter(ILogger<Converter> logger) : IConverter
     [LoggerMessage(LogLevel.Error, "Invalid XML format in TRX file {TrxFileName}")]
     private partial void LogInvalidXmlFormat(Exception exception, string trxFileName);
 
-    [LoggerMessage(LogLevel.Error, "TRX document {TrxFileName} parsing failed. Error: {Error}")]
-    private partial void LogParsingFailed(Exception exception, string trxFileName, string error);
+    [LoggerMessage(LogLevel.Error, "TRX document {TrxFileName} parsing failed")]
+    private partial void LogParsingFailed(Exception exception, string trxFileName);
 
-    [LoggerMessage(LogLevel.Information, "Merge {FilesCount} file(s)")]
-    private partial void LogMergeFiles(int filesCount);
+    [LoggerMessage(LogLevel.Information, "Merging {FileCount} TRX result document(s)")]
+    private partial void LogMergeFiles(int fileCount);
 
     [LoggerMessage(LogLevel.Warning, "Unit test definition not found for test {TestName}")]
     private partial void LogUnitTestNotFound(string? testName);
 
-    [LoggerMessage(LogLevel.Information, "Passed: {TestName}")]
+    [LoggerMessage(LogLevel.Debug, "Passed: {TestName}")]
     private partial void LogTestPassed(string? testName);
 
-    [LoggerMessage(LogLevel.Information, "Skipped: {TestName}")]
+    [LoggerMessage(LogLevel.Debug, "Skipped: {TestName}")]
     private partial void LogTestSkipped(string? testName);
 
-    [LoggerMessage(LogLevel.Information, "Failure: {TestName}")]
-    private partial void LogTestFailure(string? testName);
+    [LoggerMessage(LogLevel.Debug, "Failed: {TestName}")]
+    private partial void LogTestFailed(string? testName);
 
-    [LoggerMessage(LogLevel.Error, "Failed to get test file for test {TestName}. Error: {Error}")]
-    private partial void LogGetTestFileFailed(Exception exception, string? testName, string error);
+    [LoggerMessage(LogLevel.Debug, "Errored: {TestName}")]
+    private partial void LogTestErrored(string? testName);
+
+    [LoggerMessage(LogLevel.Error, "Failed to get test file for test {TestName}")]
+    private partial void LogGetTestFileFailed(Exception exception, string? testName);
 
     private SonarDocument Merge(List<SonarDocument> sonarDocuments)
     {
@@ -110,22 +119,24 @@ internal sealed partial class Converter(ILogger<Converter> logger) : IConverter
         return result;
     }
 
-    private SonarDocument Convert(TrxDocument trxDocument, string solutionDirectory, bool useAbsolutePath)
+    private (SonarDocument document, int unresolved) Convert(TrxDocument trxDocument, TestFileResolver resolver)
     {
         var sonarDocument = new SonarDocument();
+        Dictionary<string, UnitTest> testDefinitions = trxDocument.BuildTestDefinitionLookup();
+        int unresolved = 0;
 
         foreach (UnitTestResult trxResult in trxDocument.Results)
         {
-            UnitTest? unitTest = trxResult.GetUnitTest(trxDocument);
-
-            if (unitTest is null)
+            if (trxResult.TestId is null || !testDefinitions.TryGetValue(trxResult.TestId, out UnitTest? unitTest))
             {
                 LogUnitTestNotFound(trxResult.TestName);
+                unresolved++;
                 continue;
             }
 
-            if (!TryGetTestFile(unitTest, solutionDirectory, useAbsolutePath, trxResult.TestName, out string? testFile))
+            if (!TryResolveTestFile(resolver, unitTest, trxResult.TestName, out string? testFile))
             {
+                unresolved++;
                 continue;
             }
 
@@ -134,7 +145,40 @@ internal sealed partial class Converter(ILogger<Converter> logger) : IConverter
             file.TestCases.Add(testCase);
         }
 
-        return sonarDocument;
+        return (sonarDocument, unresolved);
+    }
+
+    private static (int passed, int skipped, int failed, int errored) CountOutcomes(SonarDocument document)
+    {
+        int passed = 0;
+        int skipped = 0;
+        int failed = 0;
+        int errored = 0;
+
+        foreach (File file in document.Files)
+        {
+            foreach (TestCase test in file.TestCases)
+            {
+                if (test.Skipped is not null)
+                {
+                    skipped++;
+                }
+                else if (test.Failure is not null)
+                {
+                    failed++;
+                }
+                else if (test.Error is not null)
+                {
+                    errored++;
+                }
+                else
+                {
+                    passed++;
+                }
+            }
+        }
+
+        return (passed, skipped, failed, errored);
     }
 
     private TestCase CreateTestCase(UnitTestResult trxResult)
@@ -144,15 +188,22 @@ internal sealed partial class Converter(ILogger<Converter> logger) : IConverter
         switch (trxResult.Outcome)
         {
             case Outcome.Passed:
+            case Outcome.Completed:
                 LogTestPassed(trxResult.TestName);
                 break;
             case Outcome.NotExecuted:
+            case Outcome.Pending:
+            case Outcome.InProgress:
                 testCase.Skipped = new Skipped();
                 LogTestSkipped(trxResult.TestName);
                 break;
-            default:
+            case Outcome.Failed:
                 testCase.Failure = new Failure(trxResult.Output?.ErrorInfo?.Message, trxResult.Output?.ErrorInfo?.StackTrace);
-                LogTestFailure(trxResult.TestName);
+                LogTestFailed(trxResult.TestName);
+                break;
+            default:
+                testCase.Error = new Error(trxResult.Output?.ErrorInfo?.Message, trxResult.Output?.ErrorInfo?.StackTrace);
+                LogTestErrored(trxResult.TestName);
                 break;
         }
 
@@ -174,17 +225,21 @@ internal sealed partial class Converter(ILogger<Converter> logger) : IConverter
         return file;
     }
 
-    private bool TryGetTestFile(UnitTest? unitTest, string solutionDirectory, bool useAbsolutePath, string? testName, [NotNullWhen(true)] out string? testFile)
+    private bool TryResolveTestFile(
+        TestFileResolver resolver,
+        UnitTest? unitTest,
+        string? testName,
+        [NotNullWhen(true)] out string? testFile)
     {
         testFile = null;
         try
         {
-            testFile = unitTest.GetTestFile(solutionDirectory, useAbsolutePath);
+            testFile = resolver.Resolve(unitTest);
             return true;
         }
         catch (Exception ex)
         {
-            LogGetTestFileFailed(ex, testName, ex.Message);
+            LogGetTestFileFailed(ex, testName);
             return false;
         }
     }

@@ -1,6 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <OutputType>Exe</OutputType>
     <TargetFrameworks>net10.0</TargetFrameworks>
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>
@@ -10,18 +11,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="TrxToSonarTest" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.XmlSerializer.Generator" />
-    <PackageReference Include="Serilog.Extensions.Hosting" />
-    <PackageReference Include="System.CommandLine" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
     <PackageReference Include="Serilog.Sinks.Async" />
     <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="System.CommandLine" />
   </ItemGroup>
 
   <ItemGroup>
