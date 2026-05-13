@@ -8,11 +8,10 @@ A .NET tool that converts TRX (Visual Studio Test Results) files to SonarQube's 
 
 ## Features
 
-- 🔄 Converts TRX test result files to SonarQube Generic Execution format
-- 📁 Recursively scans directories for TRX files
-- 🛣️ Supports both relative and absolute file paths
-- 🚀 Distributed as a .NET global tool for easy installation
-- 🎨 Clean console output with optional logo suppression
+- Converts TRX test result files to SonarQube Generic Execution format
+- Recursively scans directories for TRX files
+- Supports both relative and absolute file paths
+- Distributed as a .NET global tool for easy installation
 
 ## Installation
 
@@ -45,7 +44,7 @@ dotnet-trx2sonar -d <solution-directory> -o <output-file> [options]
 | `--directory` | `-d` | Yes | Solution directory to parse (searches recursively for TRX files) |
 | `--output` | `-o` | Yes | Output filename for the SonarQube Generic Test Data XML |
 | `--absolute` | `-a` | No | Use absolute paths for file references in the output |
-| `--no-logo` | | No | Suppress logo and version information at startup |
+| `--no-logo` | | No | Suppress the version banner at startup |
 | `--help` | `-h`, `-?` | No | Display help information |
 
 ### Examples
@@ -60,7 +59,7 @@ dotnet-trx2sonar -d ./TestResults -o sonar-test-results.xml
 dotnet-trx2sonar -d C:\Projects\MyApp\TestResults -o C:\Reports\sonar-test-results.xml -a
 ```
 
-**Suppress logo (useful for CI/CD):**
+**Suppress the version banner (useful for CI/CD):**
 ```bash
 dotnet-trx2sonar -d ./TestResults -o sonar-test-results.xml --no-logo
 ```
@@ -92,7 +91,7 @@ dotnet sonarscanner end
 
 ## Requirements
 
-- .NET 8.0 or later
+- .NET 10.0 or later
 
 ## Contributing
 
