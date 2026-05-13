@@ -1,20 +1,9 @@
 using System.Globalization;
-using System.Reflection;
 
 namespace TrxToSonar;
 
 internal static class ConsoleOutput
 {
-    public static void WriteLogo()
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        string version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-                         ?? assembly.GetName().Version?.ToString()
-                         ?? "Unknown";
-
-        Console.WriteLine($"trx2sonar {version}");
-    }
-
     public static void WriteSummary(ConversionResult result)
     {
         Console.WriteLine(

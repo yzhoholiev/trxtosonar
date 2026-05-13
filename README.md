@@ -44,7 +44,7 @@ dotnet-trx2sonar -d <solution-directory> -o <output-file> [options]
 | `--directory` | `-d` | Yes | Solution directory to parse (searches recursively for TRX files) |
 | `--output` | `-o` | Yes | Output filename for the SonarQube Generic Test Data XML |
 | `--absolute` | `-a` | No | Use absolute paths for file references in the output |
-| `--no-logo` | | No | Suppress the version banner at startup |
+| `--verbosity` | | No | Log verbosity: `Quiet`, `Minimal`, `Normal` (default), `Detailed`, `Diagnostic` |
 | `--help` | `-h`, `-?` | No | Display help information |
 
 ### Examples
@@ -59,9 +59,9 @@ dotnet-trx2sonar -d ./TestResults -o sonar-test-results.xml
 dotnet-trx2sonar -d C:\Projects\MyApp\TestResults -o C:\Reports\sonar-test-results.xml -a
 ```
 
-**Suppress the version banner (useful for CI/CD):**
+**Quiet logs (useful for CI/CD):**
 ```bash
-dotnet-trx2sonar -d ./TestResults -o sonar-test-results.xml --no-logo
+dotnet-trx2sonar -d ./TestResults -o sonar-test-results.xml --verbosity Quiet
 ```
 
 ## Integration with SonarQube

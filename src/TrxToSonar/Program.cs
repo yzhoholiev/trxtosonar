@@ -16,14 +16,8 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    // Display logo and version unless --no-logo or --help is specified
-    bool noLogo = args.Contains("--no-logo");
-    bool isHelp = args.Contains("--help") || args.Contains("-h") || args.Contains("-?");
-
-    if (!noLogo && !isHelp)
-    {
-        ConsoleOutput.WriteLogo();
-    }
+    // Tolerate --no-logo from earlier versions; the banner is gone so it's a no-op.
+    args = [.. args.Where(a => a != "--no-logo")];
 
     // Create command line options
     var solutionDirectoryOption = new Option<DirectoryInfo>("--directory", "-d")
@@ -43,11 +37,6 @@ try
         Description = "Use absolute path"
     };
 
-    var noLogoOption = new Option<bool>("--no-logo")
-    {
-        Description = "Suppress logo and version information"
-    };
-
     var verbosityOption = new Option<Verbosity>("--verbosity")
     {
         Description = "Set log verbosity: Quiet | Minimal | Normal | Detailed | Diagnostic (default: Normal)",
@@ -60,7 +49,6 @@ try
         solutionDirectoryOption,
         outputOption,
         absolutePathOption,
-        noLogoOption,
         verbosityOption
     };
 
