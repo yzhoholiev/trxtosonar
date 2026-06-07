@@ -12,14 +12,23 @@ A .NET tool that converts TRX (Visual Studio Test Results) files to SonarQube's 
 - Recursively scans directories for TRX files
 - Supports both relative and absolute file paths
 - Distributed as a .NET global tool for easy installation
+- Ships as a **Native AOT** precompiled tool on common platforms (fast startup, no JIT), with a portable fallback elsewhere
 
 ## Installation
 
 ### As a .NET Global Tool
 
+Each [release](https://github.com/yzhoholiev/trxtosonar/releases) attaches the tool's
+NuGet packages. Download them all into a single folder and install from there:
+
 ```bash
-dotnet tool install -g Trx2Sonar
+dotnet tool install -g Trx2Sonar --add-source <folder-with-downloaded-packages>
 ```
+
+Keep every downloaded `.nupkg` in the same folder — the pointer package, the RID-specific
+Native AOT packages (`win-x64`, `linux-x64`, `osx-arm64`), and the portable `any` fallback.
+The .NET CLI automatically selects the self-contained Native AOT build for your platform,
+or the portable build (which needs the .NET 10 runtime) on other platforms.
 
 ### From Source
 
@@ -91,7 +100,9 @@ dotnet sonarscanner end
 
 ## Requirements
 
-- .NET 10.0 or later
+- .NET 10.0 SDK or later to install via `dotnet tool install`. The Native AOT builds run
+  as self-contained native binaries (no runtime needed to execute); the portable fallback
+  requires the .NET 10 runtime.
 
 ## Contributing
 
