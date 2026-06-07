@@ -1,8 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Xml;
-using TrxToSonar.Model.Sonar;
-using TrxToSonar.Model.Trx;
-using File = TrxToSonar.Model.Sonar.File;
+using TrxToSonar.Sonar;
+using TrxToSonar.Sonar.Models;
+using TrxToSonar.Trx;
+using TrxToSonar.Trx.Models;
+using File = TrxToSonar.Sonar.Models.File;
 
 namespace TrxToSonar;
 
@@ -10,7 +11,7 @@ internal sealed partial class Converter(ILogger<Converter> logger)
 {
     public static bool Save(SonarDocument sonarDocument, string outputFilename)
     {
-        return XmlParser<SonarDocument>.Save(sonarDocument, outputFilename);
+        return SonarWriter.Write(sonarDocument, outputFilename);
     }
 
     public ConversionResult Parse(string? solutionDirectory, bool useAbsolutePath)
@@ -35,28 +36,16 @@ internal sealed partial class Converter(ILogger<Converter> logger)
             LogParsingFile(trxFile);
             trxCount++;
 
-            try
+            TrxDocument? trxDocument = TrxReader.Read(trxFile);
+            if (trxDocument is null)
             {
-                TrxDocument? trxDocument = XmlParser<TrxDocument>.Deserialize(trxFile);
-                if (trxDocument is null)
-                {
-                    LogTrxNotParsed(trxFile);
-                    continue;
-                }
+                LogTrxNotParsed(trxFile);
+                continue;
+            }
 
-                (SonarDocument doc, int convertUnresolved) = Convert(trxDocument, resolver);
-                sonarDocuments.Add(doc);
-                unresolved += convertUnresolved;
-            }
-            catch (TrxToSonarException ex) when (ex.InnerException is XmlException)
-            {
-                LogInvalidXmlFormat(ex, trxFile);
-            }
-            catch (Exception ex)
-            {
-                LogParsingFailed(ex, trxFile);
-                return new ConversionResult(null, trxCount, 0, 0, 0, 0, unresolved);
-            }
+            (SonarDocument doc, int convertUnresolved) = Convert(trxDocument, resolver);
+            sonarDocuments.Add(doc);
+            unresolved += convertUnresolved;
         }
 
         SonarDocument merged = Merge(sonarDocuments);
@@ -70,14 +59,8 @@ internal sealed partial class Converter(ILogger<Converter> logger)
     [LoggerMessage(LogLevel.Information, "Parsing: {TrxFileName}")]
     private partial void LogParsingFile(string trxFileName);
 
-    [LoggerMessage(LogLevel.Warning, "TRX document {TrxFileName} wasn't parsed")]
+    [LoggerMessage(LogLevel.Warning, "TRX file {TrxFileName} could not be parsed and was skipped")]
     private partial void LogTrxNotParsed(string trxFileName);
-
-    [LoggerMessage(LogLevel.Error, "Invalid XML format in TRX file {TrxFileName}")]
-    private partial void LogInvalidXmlFormat(Exception exception, string trxFileName);
-
-    [LoggerMessage(LogLevel.Error, "TRX document {TrxFileName} parsing failed")]
-    private partial void LogParsingFailed(Exception exception, string trxFileName);
 
     [LoggerMessage(LogLevel.Information, "Merging {FileCount} TRX result document(s)")]
     private partial void LogMergeFiles(int fileCount);
@@ -183,31 +166,40 @@ internal sealed partial class Converter(ILogger<Converter> logger)
 
     private TestCase CreateTestCase(UnitTestResult trxResult)
     {
-        var testCase = new TestCase(trxResult.TestName, Utils.ToSonarDuration(trxResult.Duration));
+        long duration = Utils.ToSonarDuration(trxResult.Duration);
+        ErrorInfo? errorInfo = trxResult.Output?.ErrorInfo;
+        string? testName = trxResult.TestName;
 
-        switch (trxResult.Outcome)
+        TestCase testCase = trxResult.Outcome switch
         {
-            case Outcome.Passed:
-            case Outcome.Completed:
-                LogTestPassed(trxResult.TestName);
-                break;
-            case Outcome.NotExecuted:
-            case Outcome.Pending:
-            case Outcome.InProgress:
-                testCase.Skipped = new Skipped();
-                LogTestSkipped(trxResult.TestName);
-                break;
-            case Outcome.Failed:
-                testCase.Failure = new Failure(trxResult.Output?.ErrorInfo?.Message, trxResult.Output?.ErrorInfo?.StackTrace);
-                LogTestFailed(trxResult.TestName);
-                break;
-            default:
-                testCase.Error = new Error(trxResult.Output?.ErrorInfo?.Message, trxResult.Output?.ErrorInfo?.StackTrace);
-                LogTestErrored(trxResult.TestName);
-                break;
-        }
+            Outcome.Passed or Outcome.Completed => new TestCase(testName, duration),
+            Outcome.NotExecuted or Outcome.Pending or Outcome.InProgress => new TestCase(testName, duration) { Skipped = new Skipped() },
+            Outcome.Failed => new TestCase(testName, duration) { Failure = new Failure(errorInfo?.Message, errorInfo?.StackTrace) },
+            _ => new TestCase(testName, duration) { Error = new Error(errorInfo?.Message, errorInfo?.StackTrace) }
+        };
 
+        LogOutcome(testCase, testName);
         return testCase;
+    }
+
+    private void LogOutcome(TestCase testCase, string? testName)
+    {
+        if (testCase.Skipped is not null)
+        {
+            LogTestSkipped(testName);
+        }
+        else if (testCase.Failure is not null)
+        {
+            LogTestFailed(testName);
+        }
+        else if (testCase.Error is not null)
+        {
+            LogTestErrored(testName);
+        }
+        else
+        {
+            LogTestPassed(testName);
+        }
     }
 
     private static File GetOrAddFile(SonarDocument sonarDocument, string testFile)

@@ -1,15 +1,14 @@
 using TrxToSonar;
-using TrxToSonar.Model.Sonar;
-using TrxToSonar.Model.Trx;
-using Xunit;
-using File = TrxToSonar.Model.Sonar.File;
+using TrxToSonar.Sonar.Models;
+using TrxToSonar.Trx.Models;
+using File = TrxToSonar.Sonar.Models.File;
 
 namespace TrxToSonarTest;
 
 public class ExtensionsTests
 {
-    [Fact]
-    public void BuildTestDefinitionLookup_WithMatchingId_ReturnsUnitTest()
+    [Test]
+    public async Task BuildTestDefinitionLookup_WithMatchingId_ReturnsUnitTest()
     {
         var trxDocument = new TrxDocument();
         var unitTest = new UnitTest { Id = "test-123", Name = "TestMethod1" };
@@ -17,13 +16,13 @@ public class ExtensionsTests
 
         Dictionary<string, UnitTest> lookup = trxDocument.BuildTestDefinitionLookup();
 
-        Assert.True(lookup.TryGetValue("test-123", out UnitTest? result));
-        Assert.NotNull(result);
-        Assert.Equal("TestMethod1", result.Name);
+        await Assert.That(lookup.TryGetValue("test-123", out UnitTest? result)).IsTrue();
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Name).IsEqualTo("TestMethod1");
     }
 
-    [Fact]
-    public void BuildTestDefinitionLookup_WithNonMatchingId_ReturnsFalse()
+    [Test]
+    public async Task BuildTestDefinitionLookup_WithNonMatchingId_ReturnsFalse()
     {
         var trxDocument = new TrxDocument();
         var unitTest = new UnitTest { Id = "test-123", Name = "TestMethod1" };
@@ -31,11 +30,11 @@ public class ExtensionsTests
 
         Dictionary<string, UnitTest> lookup = trxDocument.BuildTestDefinitionLookup();
 
-        Assert.False(lookup.ContainsKey("test-456"));
+        await Assert.That(lookup.ContainsKey("test-456")).IsFalse();
     }
 
-    [Fact]
-    public void BuildTestDefinitionLookup_SkipsDefinitionsWithNullId()
+    [Test]
+    public async Task BuildTestDefinitionLookup_SkipsDefinitionsWithNullId()
     {
         var trxDocument = new TrxDocument();
         trxDocument.TestDefinitions.Add(new UnitTest { Id = null, Name = "Nameless" });
@@ -43,12 +42,12 @@ public class ExtensionsTests
 
         Dictionary<string, UnitTest> lookup = trxDocument.BuildTestDefinitionLookup();
 
-        Assert.Single(lookup);
-        Assert.True(lookup.ContainsKey("test-1"));
+        await Assert.That(lookup).HasSingleItem();
+        await Assert.That(lookup.ContainsKey("test-1")).IsTrue();
     }
 
-    [Fact]
-    public void GetFile_WithMatchingPath_ReturnsFile()
+    [Test]
+    public async Task GetFile_WithMatchingPath_ReturnsFile()
     {
         var sonarDocument = new SonarDocument();
         var file = new File("path/to/test.cs");
@@ -56,12 +55,12 @@ public class ExtensionsTests
 
         File? result = sonarDocument.GetFile("path/to/test.cs");
 
-        Assert.NotNull(result);
-        Assert.Equal("path/to/test.cs", result.Path);
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result!.Path).IsEqualTo("path/to/test.cs");
     }
 
-    [Fact]
-    public void GetFile_WithNonMatchingPath_ReturnsNull()
+    [Test]
+    public async Task GetFile_WithNonMatchingPath_ReturnsNull()
     {
         var sonarDocument = new SonarDocument();
         var file = new File("path/to/test.cs");
@@ -69,6 +68,6 @@ public class ExtensionsTests
 
         File? result = sonarDocument.GetFile("path/to/other.cs");
 
-        Assert.Null(result);
+        await Assert.That(result).IsNull();
     }
 }

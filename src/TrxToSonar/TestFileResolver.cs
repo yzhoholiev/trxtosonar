@@ -1,5 +1,5 @@
 using System.Globalization;
-using TrxToSonar.Model.Trx;
+using TrxToSonar.Trx.Models;
 
 namespace TrxToSonar;
 

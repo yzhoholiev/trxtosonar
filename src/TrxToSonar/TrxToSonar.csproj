@@ -1,13 +1,25 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>
     <PackageId>Trx2Sonar</PackageId>
     <RollForward>LatestMajor</RollForward>
     <ToolCommandName>dotnet-trx2sonar</ToolCommandName>
+  </PropertyGroup>
+
+  <!-- Native AOT, packaged as a RID-specific .NET tool (.NET 10+). Each listed RID
+       gets a self-contained, AOT-compiled package; the `any` RID is a portable
+       CoreCLR fallback for platforms without a native build. The CLI picks the
+       right package automatically on `dotnet tool install`. AOT packages are built
+       per RID on a matching-OS machine: `dotnet pack -r <rid>`; the fallback with
+       `dotnet pack -r any -p:PublishAot=false`. -->
+  <PropertyGroup>
+    <PublishAot>true</PublishAot>
+    <ToolPackageRuntimeIdentifiers>win-x64;linux-x64;osx-arm64;any</ToolPackageRuntimeIdentifiers>
+    <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,15 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.XmlSerializer.Generator" />
-    <PackageReference Include="Serilog.Extensions.Logging" />
-    <PackageReference Include="Serilog.Sinks.Async" />
-    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="System.CommandLine" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.XmlSerializer.Generator" Version="10.0.0" />
   </ItemGroup>
 
 </Project>

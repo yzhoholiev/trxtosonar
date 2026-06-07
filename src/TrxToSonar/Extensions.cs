@@ -1,6 +1,6 @@
-using TrxToSonar.Model.Sonar;
-using TrxToSonar.Model.Trx;
-using File = TrxToSonar.Model.Sonar.File;
+using TrxToSonar.Sonar.Models;
+using TrxToSonar.Trx.Models;
+using File = TrxToSonar.Sonar.Models.File;
 
 namespace TrxToSonar;
 

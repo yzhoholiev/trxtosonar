@@ -1,23 +1,20 @@
-// This file is used by Code Analysis to maintain SuppressMessage
-// attributes that are applied to this project.
-
 using System.Diagnostics.CodeAnalysis;
 
 [assembly:
     SuppressMessage(
         "Design",
         "CA1515:Consider making public types internal",
-        Justification = "Model classes must be public for XML serialization",
+        Justification = "Public data model of the SonarQube generic-test XML schema",
         Scope = "namespaceanddescendants",
-        Target = "~N:TrxToSonar.Model.Sonar")]
+        Target = "~N:TrxToSonar.Sonar.Models")]
 
 [assembly:
     SuppressMessage(
         "Design",
         "CA1515:Consider making public types internal",
-        Justification = "Model classes must be public for XML serialization",
+        Justification = "Public data model of the TRX XML schema",
         Scope = "namespaceanddescendants",
-        Target = "~N:TrxToSonar.Model.Trx")]
+        Target = "~N:TrxToSonar.Trx.Models")]
 
 [assembly:
     SuppressMessage(

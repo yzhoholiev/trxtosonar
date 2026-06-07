@@ -1,20 +1,19 @@
 using System.Security;
 using Microsoft.Extensions.Logging.Abstractions;
 using TrxToSonar;
-using TrxToSonar.Model.Sonar;
-using Xunit;
-using File = TrxToSonar.Model.Sonar.File;
+using TrxToSonar.Sonar.Models;
+using File = TrxToSonar.Sonar.Models.File;
 using IOFile = System.IO.File;
 
 namespace TrxToSonarTest;
 
 public class ConverterEndToEndTests
 {
-    [Fact]
-    public void Parse_FullTrxFixture_MapsOutcomesToCorrectSonarElements()
+    [Test]
+    public async Task Parse_FullTrxFixture_MapsOutcomesToCorrectSonarElements()
     {
-        // Arrange: build a fake solution with a test project containing one source file
-        // and a TRX referencing four tests covering each outcome bucket.
+        // Build a fake solution with a test project containing one source file and a TRX
+        // referencing four tests covering each outcome bucket.
         string solutionDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         string projectDir = Path.Combine(solutionDir, "MyApp.Tests");
         string binDir = Path.Combine(projectDir, "bin", "Debug", "net10.0");
@@ -30,43 +29,41 @@ public class ConverterEndToEndTests
         {
             var converter = new Converter(NullLogger<Converter>.Instance);
 
-            // Act
             ConversionResult result = converter.Parse(solutionDir, false);
 
-            // Assert
-            Assert.NotNull(result.Document);
-            File file = Assert.Single(result.Document.Files);
-            Assert.Equal(Path.Combine("MyApp.Tests", "SampleTests.cs"), file.Path);
+            await Assert.That(result.Document).IsNotNull();
+            File file = await Assert.That(result.Document!.Files).HasSingleItem();
+            await Assert.That(file.Path).IsEqualTo(Path.Combine("MyApp.Tests", "SampleTests.cs"));
 
-            Assert.Equal(4, file.TestCases.Count);
-            Assert.Equal(1, result.Passed);
-            Assert.Equal(1, result.Skipped);
-            Assert.Equal(1, result.Failed);
-            Assert.Equal(1, result.Errored);
-            Assert.Equal(0, result.Unresolved);
-            Assert.Equal(1, result.TrxFileCount);
+            await Assert.That(file.TestCases.Count).IsEqualTo(4);
+            await Assert.That(result.Passed).IsEqualTo(1);
+            await Assert.That(result.Skipped).IsEqualTo(1);
+            await Assert.That(result.Failed).IsEqualTo(1);
+            await Assert.That(result.Errored).IsEqualTo(1);
+            await Assert.That(result.Unresolved).IsEqualTo(0);
+            await Assert.That(result.TrxFileCount).IsEqualTo(1);
 
             TestCase passed = file.TestCases.Single(t => t.Name == "PassingTest");
-            Assert.Null(passed.Skipped);
-            Assert.Null(passed.Failure);
-            Assert.Null(passed.Error);
-            Assert.Equal(15, passed.Duration);
+            await Assert.That(passed.Skipped).IsNull();
+            await Assert.That(passed.Failure).IsNull();
+            await Assert.That(passed.Error).IsNull();
+            await Assert.That(passed.Duration).IsEqualTo(15L);
 
             TestCase failed = file.TestCases.Single(t => t.Name == "FailingTest");
-            Assert.NotNull(failed.Failure);
-            Assert.Null(failed.Error);
-            Assert.Equal("Assertion failed", failed.Failure.Message);
-            Assert.Contains("at FailingTest", failed.Failure.Value, StringComparison.Ordinal);
+            await Assert.That(failed.Failure).IsNotNull();
+            await Assert.That(failed.Error).IsNull();
+            await Assert.That(failed.Failure!.Message).IsEqualTo("Assertion failed");
+            await Assert.That(failed.Failure!.Value).Contains("at FailingTest");
 
             TestCase skipped = file.TestCases.Single(t => t.Name == "SkippedTest");
-            Assert.NotNull(skipped.Skipped);
-            Assert.Null(skipped.Failure);
-            Assert.Null(skipped.Error);
+            await Assert.That(skipped.Skipped).IsNotNull();
+            await Assert.That(skipped.Failure).IsNull();
+            await Assert.That(skipped.Error).IsNull();
 
             TestCase errored = file.TestCases.Single(t => t.Name == "ErroredTest");
-            Assert.NotNull(errored.Error);
-            Assert.Null(errored.Failure);
-            Assert.Equal("Exception thrown", errored.Error.Message);
+            await Assert.That(errored.Error).IsNotNull();
+            await Assert.That(errored.Failure).IsNull();
+            await Assert.That(errored.Error!.Message).IsEqualTo("Exception thrown");
         }
         finally
         {
@@ -77,10 +74,10 @@ public class ConverterEndToEndTests
         }
     }
 
-    [Fact]
-    public void Parse_SerializedOutput_ContainsBothErrorAndFailureElements()
+    [Test]
+    public async Task Parse_SerializedOutput_ContainsBothErrorAndFailureElements()
     {
-        // Round-trip the converted document through XmlParser to make sure the
+        // Round-trip the converted document through Converter.Save to make sure the
         // bug-fix (Error vs Failure) actually shows up in the produced XML.
         string solutionDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         string projectDir = Path.Combine(solutionDir, "MyApp.Tests");
@@ -95,13 +92,13 @@ public class ConverterEndToEndTests
         {
             var converter = new Converter(NullLogger<Converter>.Instance);
             ConversionResult result = converter.Parse(solutionDir, false);
-            Assert.NotNull(result.Document);
-            Assert.True(Converter.Save(result.Document, outputPath));
+            await Assert.That(result.Document).IsNotNull();
+            await Assert.That(Converter.Save(result.Document!, outputPath)).IsTrue();
 
             string xml = IOFile.ReadAllText(outputPath);
-            Assert.Contains("<failure message=\"Assertion failed\"", xml, StringComparison.Ordinal);
-            Assert.Contains("<error message=\"Exception thrown\"", xml, StringComparison.Ordinal);
-            Assert.Contains("<skipped", xml, StringComparison.Ordinal);
+            await Assert.That(xml).Contains("<failure message=\"Assertion failed\"");
+            await Assert.That(xml).Contains("<error message=\"Exception thrown\"");
+            await Assert.That(xml).Contains("<skipped");
         }
         finally
         {

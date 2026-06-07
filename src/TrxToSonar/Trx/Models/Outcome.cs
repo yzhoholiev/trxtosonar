@@ -1,4 +1,4 @@
-﻿namespace TrxToSonar.Model.Trx;
+﻿namespace TrxToSonar.Trx.Models;
 
 public enum Outcome
 {

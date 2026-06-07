@@ -1,4 +1,4 @@
-namespace TrxToSonar;
+namespace TrxToSonar.Logging;
 
 internal enum Verbosity
 {

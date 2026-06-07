@@ -1,17 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0</TargetFrameworks>
-    <NoWarn>$(NoWarn);CA1707</NoWarn>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <!-- CA1707: underscores in test method names. S6966: sync file IO is fine in test setup. -->
+    <NoWarn>$(NoWarn);CA1707;S6966</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="xunit.v3" />
-    <PackageReference Include="xunit.runner.visualstudio">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="TUnit" />
   </ItemGroup>
 
   <ItemGroup>

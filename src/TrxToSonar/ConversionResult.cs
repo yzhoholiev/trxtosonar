@@ -1,4 +1,4 @@
-using TrxToSonar.Model.Sonar;
+using TrxToSonar.Sonar.Models;
 
 namespace TrxToSonar;
 

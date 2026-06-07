@@ -1,14 +1,13 @@
 using TrxToSonar;
-using TrxToSonar.Model.Trx;
-using Xunit;
+using TrxToSonar.Trx.Models;
 using IOFile = System.IO.File;
 
 namespace TrxToSonarTest;
 
 public class TestFileResolverTests
 {
-    [Fact]
-    public void Resolve_WithNullClassName_ThrowsException()
+    [Test]
+    public async Task Resolve_WithNullClassName_ThrowsException()
     {
         var unitTest = new UnitTest
         {
@@ -19,14 +18,15 @@ public class TestFileResolverTests
             }
         };
 
-        var resolver = new TestFileResolver(@"C:\Projects", useAbsolutePath: false);
+        var resolver = new TestFileResolver(@"C:\Projects", false);
 
-        TrxToSonarException exception = Assert.Throws<TrxToSonarException>(() => resolver.Resolve(unitTest));
-        Assert.Equal("Class name was not provided", exception.Message);
+        await Assert.That(() => resolver.Resolve(unitTest))
+            .ThrowsExactly<TrxToSonarException>()
+            .WithMessage("Class name was not provided");
     }
 
-    [Fact]
-    public void Resolve_WithEmptyClassName_ThrowsException()
+    [Test]
+    public async Task Resolve_WithEmptyClassName_ThrowsException()
     {
         var unitTest = new UnitTest
         {
@@ -37,22 +37,23 @@ public class TestFileResolverTests
             }
         };
 
-        var resolver = new TestFileResolver(@"C:\Projects", useAbsolutePath: false);
+        var resolver = new TestFileResolver(@"C:\Projects", false);
 
-        TrxToSonarException exception = Assert.Throws<TrxToSonarException>(() => resolver.Resolve(unitTest));
-        Assert.Equal("Class name was not provided", exception.Message);
+        await Assert.That(() => resolver.Resolve(unitTest))
+            .ThrowsExactly<TrxToSonarException>()
+            .WithMessage("Class name was not provided");
     }
 
-    [Fact]
-    public void Resolve_WithNullUnitTest_ThrowsException()
+    [Test]
+    public async Task Resolve_WithNullUnitTest_ThrowsException()
     {
-        var resolver = new TestFileResolver(@"C:\Projects", useAbsolutePath: false);
+        var resolver = new TestFileResolver(@"C:\Projects", false);
 
-        Assert.Throws<TrxToSonarException>(() => resolver.Resolve(null));
+        await Assert.That(() => resolver.Resolve(null)).ThrowsExactly<TrxToSonarException>();
     }
 
-    [Fact]
-    public void Resolve_WithFileNotFound_ThrowsFileNotFoundException()
+    [Test]
+    public async Task Resolve_WithFileNotFound_ThrowsFileNotFoundException()
     {
         using var temp = new TempProject();
         var unitTest = new UnitTest
@@ -64,96 +65,98 @@ public class TestFileResolverTests
             }
         };
 
-        var resolver = new TestFileResolver(temp.SolutionDir, useAbsolutePath: false);
+        var resolver = new TestFileResolver(temp.SolutionDir, false);
 
-        FileNotFoundException exception = Assert.Throws<FileNotFoundException>(() => resolver.Resolve(unitTest));
-        Assert.Contains("Cannot find file with class NonExistentTestClass", exception.Message, StringComparison.Ordinal);
+        await Assert.That(() => resolver.Resolve(unitTest))
+            .ThrowsExactly<FileNotFoundException>()
+            .WithMessageContaining("Cannot find file with class NonExistentTestClass");
     }
 
-    [Fact]
-    public void Resolve_WithAbsolutePath_ReturnsFullPath()
+    [Test]
+    public async Task Resolve_WithAbsolutePath_ReturnsFullPath()
     {
         using var temp = new TempProject();
         string testFile = temp.WriteSource("MyTestClass.cs");
 
-        var resolver = new TestFileResolver(temp.SolutionDir, useAbsolutePath: true);
+        var resolver = new TestFileResolver(temp.SolutionDir, true);
 
         string result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyTestClass"));
 
-        Assert.Equal(testFile, result);
-        Assert.True(Path.IsPathRooted(result));
+        await Assert.That(result).IsEqualTo(testFile);
+        await Assert.That(Path.IsPathRooted(result)).IsTrue();
     }
 
-    [Fact]
-    public void Resolve_WithRelativePath_ReturnsRelativePath()
+    [Test]
+    public async Task Resolve_WithRelativePath_ReturnsRelativePath()
     {
         using var temp = new TempProject();
         temp.WriteSource("MyTestClass.cs");
 
-        var resolver = new TestFileResolver(temp.SolutionDir, useAbsolutePath: false);
+        var resolver = new TestFileResolver(temp.SolutionDir, false);
 
         string result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyTestClass"));
 
-        Assert.Equal(Path.Combine("Tests", "MyTestClass.cs"), result);
-        Assert.False(Path.IsPathRooted(result));
+        await Assert.That(result).IsEqualTo(Path.Combine("Tests", "MyTestClass.cs"));
+        await Assert.That(Path.IsPathRooted(result)).IsFalse();
     }
 
-    [Fact]
-    public void Resolve_FindsFileWithTestSuffix()
+    [Test]
+    public async Task Resolve_FindsFileWithTestSuffix()
     {
         using var temp = new TempProject();
         temp.WriteSource("MyClassTest.cs");
 
-        var resolver = new TestFileResolver(temp.SolutionDir, useAbsolutePath: false);
+        var resolver = new TestFileResolver(temp.SolutionDir, false);
 
         string result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyClass"));
 
-        Assert.Equal(Path.Combine("Tests", "MyClassTest.cs"), result);
+        await Assert.That(result).IsEqualTo(Path.Combine("Tests", "MyClassTest.cs"));
     }
 
-    [Fact]
-    public void Resolve_FindsFileWithTestsSuffix()
+    [Test]
+    public async Task Resolve_FindsFileWithTestsSuffix()
     {
         using var temp = new TempProject();
         temp.WriteSource("MyClassTests.cs");
 
-        var resolver = new TestFileResolver(temp.SolutionDir, useAbsolutePath: false);
+        var resolver = new TestFileResolver(temp.SolutionDir, false);
 
         string result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyClass"));
 
-        Assert.Equal(Path.Combine("Tests", "MyClassTests.cs"), result);
+        await Assert.That(result).IsEqualTo(Path.Combine("Tests", "MyClassTests.cs"));
     }
 
-    [Fact]
-    public void Resolve_ExtractsClassNameFromFullyQualifiedName()
+    [Test]
+    public async Task Resolve_ExtractsClassNameFromFullyQualifiedName()
     {
         using var temp = new TempProject();
         temp.WriteSource("TestClass.cs");
 
-        var resolver = new TestFileResolver(temp.SolutionDir, useAbsolutePath: false);
+        var resolver = new TestFileResolver(temp.SolutionDir, false);
 
         string result = resolver.Resolve(temp.MakeUnitTest("My.Very.Long.Namespace.TestClass"));
 
-        Assert.Equal(Path.Combine("Tests", "TestClass.cs"), result);
+        await Assert.That(result).IsEqualTo(Path.Combine("Tests", "TestClass.cs"));
     }
 
-    [Fact]
-    public void Resolve_CachesProjectFiles_AcrossMultipleCalls()
+    [Test]
+    public async Task Resolve_CachesProjectFiles_AcrossMultipleCalls()
     {
         // Walk the same project tree twice and add a new source file in between.
         // If the cache is doing its job, the second call won't see the new file.
         using var temp = new TempProject();
         temp.WriteSource("FirstClass.cs");
 
-        var resolver = new TestFileResolver(temp.SolutionDir, useAbsolutePath: false);
+        var resolver = new TestFileResolver(temp.SolutionDir, false);
 
         string first = resolver.Resolve(temp.MakeUnitTest("MyNamespace.FirstClass"));
-        Assert.Equal(Path.Combine("Tests", "FirstClass.cs"), first);
+        await Assert.That(first).IsEqualTo(Path.Combine("Tests", "FirstClass.cs"));
 
         // Add a second source file AFTER the cache is populated.
         temp.WriteSource("SecondClass.cs");
 
-        Assert.Throws<FileNotFoundException>(() => resolver.Resolve(temp.MakeUnitTest("MyNamespace.SecondClass")));
+        await Assert.That(() => resolver.Resolve(temp.MakeUnitTest("MyNamespace.SecondClass")))
+            .ThrowsExactly<FileNotFoundException>();
     }
 
     private sealed class TempProject : IDisposable
@@ -184,13 +187,16 @@ public class TestFileResolverTests
             return path;
         }
 
-        public UnitTest MakeUnitTest(string className) => new()
+        public UnitTest MakeUnitTest(string className)
         {
-            TestMethod = new TestMethod
+            return new UnitTest
             {
-                ClassName = className,
-                CodeBase = BinDir
-            }
-        };
+                TestMethod = new TestMethod
+                {
+                    ClassName = className,
+                    CodeBase = BinDir
+                }
+            };
+        }
     }
 }

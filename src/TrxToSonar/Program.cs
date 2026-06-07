@@ -1,25 +1,9 @@
 using System.CommandLine;
-using System.Globalization;
-using Serilog;
-using Serilog.Core;
-using Serilog.Events;
-using Serilog.Extensions.Logging;
 using TrxToSonar;
-
-// Configure Serilog. Level is controlled by the --verbosity flag below.
-var levelSwitch = new LoggingLevelSwitch();
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.ControlledBy(levelSwitch)
-    .Enrich.FromLogContext()
-    .WriteTo.Async(sinks => sinks.Console(formatProvider: CultureInfo.InvariantCulture, applyThemeToRedirectedOutput: false))
-    .CreateLogger();
+using TrxToSonar.Logging;
 
 try
 {
-    // Tolerate --no-logo from earlier versions; the banner is gone so it's a no-op.
-    args = [.. args.Where(a => a != "--no-logo")];
-
-    // Create command line options
     var solutionDirectoryOption = new Option<DirectoryInfo>("--directory", "-d")
     {
         Description = "Solution directory to parse",
@@ -43,7 +27,6 @@ try
         DefaultValueFactory = _ => Verbosity.Normal
     };
 
-    // Create root command
     var rootCommand = new RootCommand("Converts TRX test result files to SonarQube Generic Test Data format")
     {
         solutionDirectoryOption,
@@ -52,18 +35,18 @@ try
         verbosityOption
     };
 
-    // Set command handler
     rootCommand.SetAction(parseResult =>
     {
+        var logLevel = parseResult.GetValue(verbosityOption).ToLogLevel();
+        var logger = new ConsoleLogger<Converter>(logLevel);
+
         try
         {
             DirectoryInfo solutionDir = parseResult.GetRequiredValue(solutionDirectoryOption);
             FileInfo output = parseResult.GetRequiredValue(outputOption);
             bool useAbsolute = parseResult.GetValue(absolutePathOption);
-            levelSwitch.MinimumLevel = MapVerbosity(parseResult.GetValue(verbosityOption));
 
-            using var loggerFactory = new SerilogLoggerFactory(Log.Logger);
-            var converter = new Converter(loggerFactory.CreateLogger<Converter>());
+            var converter = new Converter(logger);
 
             ConversionResult result = converter.Parse(solutionDir.FullName, useAbsolute);
             ConsoleOutput.WriteSummary(result);
@@ -76,36 +59,18 @@ try
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "An error occurred while processing TRX files");
+            logger.ProcessingFailed(ex);
             return 1;
         }
 
         return 0;
     });
 
-    // Execute command
     ParseResult parseResult = rootCommand.Parse(args);
     return await parseResult.InvokeAsync();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Application terminated unexpectedly");
+    new ConsoleLogger<Program>(LogLevel.Information).TerminatedUnexpectedly(ex);
     return 1;
-}
-finally
-{
-    await Log.CloseAndFlushAsync();
-}
-
-static LogEventLevel MapVerbosity(Verbosity verbosity)
-{
-    return verbosity switch
-    {
-        Verbosity.Quiet => LogEventLevel.Error,
-        Verbosity.Minimal => LogEventLevel.Warning,
-        Verbosity.Normal => LogEventLevel.Information,
-        Verbosity.Detailed => LogEventLevel.Debug,
-        Verbosity.Diagnostic => LogEventLevel.Verbose,
-        _ => LogEventLevel.Information
-    };
 }

@@ -1,90 +1,89 @@
 using TrxToSonar;
-using Xunit;
 
 namespace TrxToSonarTest;
 
 public class UtilsTests
 {
-    [Fact]
-    public void TrxDurationShouldBeConverted()
+    [Test]
+    public async Task TrxDurationShouldBeConverted()
     {
         long sonarDuration = Utils.ToSonarDuration("00:00:00.0090000");
-        Assert.Equal(9, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(9L);
     }
 
-    [Fact]
-    public void ToSonarDuration_WithNullInput_ReturnsZero()
+    [Test]
+    public async Task ToSonarDuration_WithNullInput_ReturnsZero()
     {
         long sonarDuration = Utils.ToSonarDuration(null);
-        Assert.Equal(0, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(0L);
     }
 
-    [Fact]
-    public void ToSonarDuration_WithEmptyString_ReturnsZero()
+    [Test]
+    public async Task ToSonarDuration_WithEmptyString_ReturnsZero()
     {
         long sonarDuration = Utils.ToSonarDuration(string.Empty);
-        Assert.Equal(0, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(0L);
     }
 
-    [Fact]
-    public void ToSonarDuration_WithInvalidFormat_ReturnsZero()
+    [Test]
+    public async Task ToSonarDuration_WithInvalidFormat_ReturnsZero()
     {
         long sonarDuration = Utils.ToSonarDuration("invalid");
-        Assert.Equal(0, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(0L);
     }
 
-    [Fact]
-    public void ToSonarDuration_WithZeroDuration_ReturnsZero()
+    [Test]
+    public async Task ToSonarDuration_WithZeroDuration_ReturnsZero()
     {
         long sonarDuration = Utils.ToSonarDuration("00:00:00");
-        Assert.Equal(0, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(0L);
     }
 
-    [Fact]
-    public void ToSonarDuration_WithSeconds_ReturnsCorrectMilliseconds()
+    [Test]
+    public async Task ToSonarDuration_WithSeconds_ReturnsCorrectMilliseconds()
     {
         long sonarDuration = Utils.ToSonarDuration("00:00:01");
-        Assert.Equal(1000, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(1000L);
     }
 
-    [Fact]
-    public void ToSonarDuration_WithMinutes_ReturnsCorrectMilliseconds()
+    [Test]
+    public async Task ToSonarDuration_WithMinutes_ReturnsCorrectMilliseconds()
     {
         long sonarDuration = Utils.ToSonarDuration("00:01:00");
-        Assert.Equal(60000, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(60000L);
     }
 
-    [Fact]
-    public void ToSonarDuration_WithHours_ReturnsCorrectMilliseconds()
+    [Test]
+    public async Task ToSonarDuration_WithHours_ReturnsCorrectMilliseconds()
     {
         long sonarDuration = Utils.ToSonarDuration("01:00:00");
-        Assert.Equal(3600000, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(3600000L);
     }
 
-    [Fact]
-    public void ToSonarDuration_WithComplexDuration_ReturnsCorrectMilliseconds()
+    [Test]
+    public async Task ToSonarDuration_WithComplexDuration_ReturnsCorrectMilliseconds()
     {
         long sonarDuration = Utils.ToSonarDuration("01:23:45.6789123");
-        Assert.Equal(5025678, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(5025678L);
     }
 
-    [Fact]
-    public void ToSonarDuration_WithMilliseconds_ReturnsCorrectMilliseconds()
+    [Test]
+    public async Task ToSonarDuration_WithMilliseconds_ReturnsCorrectMilliseconds()
     {
         long sonarDuration = Utils.ToSonarDuration("00:00:00.1234567");
-        Assert.Equal(123, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(123L);
     }
 
-    [Theory]
-    [InlineData("00:00:00.0010000", 1)]
-    [InlineData("00:00:00.0100000", 10)]
-    [InlineData("00:00:00.1000000", 100)]
-    [InlineData("00:00:01.0000000", 1000)]
-    [InlineData("00:01:00.0000000", 60000)]
-    [InlineData("01:00:00.0000000", 3600000)]
-    public void ToSonarDuration_WithVariousDurations_ReturnsCorrectMilliseconds(string trxDuration, long expectedMilliseconds)
+    [Test]
+    [Arguments("00:00:00.0010000", 1L)]
+    [Arguments("00:00:00.0100000", 10L)]
+    [Arguments("00:00:00.1000000", 100L)]
+    [Arguments("00:00:01.0000000", 1000L)]
+    [Arguments("00:01:00.0000000", 60000L)]
+    [Arguments("01:00:00.0000000", 3600000L)]
+    public async Task ToSonarDuration_WithVariousDurations_ReturnsCorrectMilliseconds(string trxDuration, long expectedMilliseconds)
     {
         long sonarDuration = Utils.ToSonarDuration(trxDuration);
-        Assert.Equal(expectedMilliseconds, sonarDuration);
+        await Assert.That(sonarDuration).IsEqualTo(expectedMilliseconds);
     }
 }

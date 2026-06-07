@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using TrxToSonar;
-using TrxToSonar.Model.Sonar;
-using Xunit;
+using TrxToSonar.Sonar.Models;
 using IOFile = System.IO.File;
 
 namespace TrxToSonarTest;
@@ -10,35 +9,35 @@ public class ConverterTests
 {
     private readonly Converter _converter = new(NullLogger<Converter>.Instance);
 
-    [Fact]
-    public void Parse_WithNullDirectory_ReturnsNullDocument()
+    [Test]
+    public async Task Parse_WithNullDirectory_ReturnsNullDocument()
     {
         ConversionResult result = _converter.Parse(null, false);
 
-        Assert.Null(result.Document);
-        Assert.Equal(0, result.TrxFileCount);
+        await Assert.That(result.Document).IsNull();
+        await Assert.That(result.TrxFileCount).IsEqualTo(0);
     }
 
-    [Fact]
-    public void Parse_WithEmptyDirectory_ReturnsNullDocument()
+    [Test]
+    public async Task Parse_WithEmptyDirectory_ReturnsNullDocument()
     {
         ConversionResult result = _converter.Parse(string.Empty, false);
 
-        Assert.Null(result.Document);
+        await Assert.That(result.Document).IsNull();
     }
 
-    [Fact]
-    public void Parse_WithNonExistentDirectory_ReturnsNullDocument()
+    [Test]
+    public async Task Parse_WithNonExistentDirectory_ReturnsNullDocument()
     {
         string nonExistentDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
         ConversionResult result = _converter.Parse(nonExistentDir, false);
 
-        Assert.Null(result.Document);
+        await Assert.That(result.Document).IsNull();
     }
 
-    [Fact]
-    public void Parse_WithDirectoryWithoutTrxFiles_ReturnsEmptySonarDocument()
+    [Test]
+    public async Task Parse_WithDirectoryWithoutTrxFiles_ReturnsEmptySonarDocument()
     {
         string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
@@ -47,9 +46,9 @@ public class ConverterTests
         {
             ConversionResult result = _converter.Parse(tempDir, false);
 
-            Assert.NotNull(result.Document);
-            Assert.Empty(result.Document.Files);
-            Assert.Equal(0, result.TrxFileCount);
+            await Assert.That(result.Document).IsNotNull();
+            await Assert.That(result.Document!.Files).IsEmpty();
+            await Assert.That(result.TrxFileCount).IsEqualTo(0);
         }
         finally
         {
@@ -60,25 +59,21 @@ public class ConverterTests
         }
     }
 
-    [Fact]
-    public void Save_WithValidDocument_ReturnsTrue()
+    [Test]
+    public async Task Save_WithValidDocument_ReturnsTrue()
     {
-        // Arrange
         var sonarDocument = new SonarDocument();
         string outputFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xml");
 
         try
         {
-            // Act
             bool result = Converter.Save(sonarDocument, outputFile);
 
-            // Assert
-            Assert.True(result);
-            Assert.True(IOFile.Exists(outputFile));
+            await Assert.That(result).IsTrue();
+            await Assert.That(IOFile.Exists(outputFile)).IsTrue();
         }
         finally
         {
-            // Cleanup
             if (IOFile.Exists(outputFile))
             {
                 IOFile.Delete(outputFile);
@@ -86,31 +81,26 @@ public class ConverterTests
         }
     }
 
-    [Fact]
-    public void Save_OverwritesExistingFile()
+    [Test]
+    public async Task Save_OverwritesExistingFile()
     {
-        // Arrange
         var sonarDocument = new SonarDocument();
         string outputFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xml");
 
         try
         {
-            // Create initial file
             IOFile.WriteAllText(outputFile, "initial content");
 
-            // Act
             bool result = Converter.Save(sonarDocument, outputFile);
 
-            // Assert
-            Assert.True(result);
-            Assert.True(IOFile.Exists(outputFile));
+            await Assert.That(result).IsTrue();
+            await Assert.That(IOFile.Exists(outputFile)).IsTrue();
             string content = IOFile.ReadAllText(outputFile);
-            Assert.Contains("testExecutions", content, StringComparison.Ordinal);
-            Assert.DoesNotContain("initial content", content, StringComparison.Ordinal);
+            await Assert.That(content).Contains("testExecutions");
+            await Assert.That(content).DoesNotContain("initial content");
         }
         finally
         {
-            // Cleanup
             if (IOFile.Exists(outputFile))
             {
                 IOFile.Delete(outputFile);
@@ -118,27 +108,49 @@ public class ConverterTests
         }
     }
 
-    [Fact]
-    public void Save_CreatesDirectoryIfNotExists()
+    [Test]
+    public async Task Save_CreatesDirectoryIfNotExists()
     {
-        // Arrange
         var sonarDocument = new SonarDocument();
         string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         string outputFile = Path.Combine(tempDir, "output.xml");
 
         try
         {
-            // Act
             bool result = Converter.Save(sonarDocument, outputFile);
 
-            // Assert
-            Assert.True(result);
-            Assert.True(Directory.Exists(tempDir));
-            Assert.True(IOFile.Exists(outputFile));
+            await Assert.That(result).IsTrue();
+            await Assert.That(Directory.Exists(tempDir)).IsTrue();
+            await Assert.That(IOFile.Exists(outputFile)).IsTrue();
         }
         finally
         {
-            // Cleanup
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task Parse_WithMalformedTrxFile_SkipsFileAndDoesNotAbort()
+    {
+        // The directory's only TRX file is not well-formed XML.
+        string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+        IOFile.WriteAllText(Path.Combine(tempDir, "broken.trx"), "<TestRun><Results>");
+
+        try
+        {
+            ConversionResult result = _converter.Parse(tempDir, false);
+
+            // The bad file is counted but skipped; the run still produces a document.
+            await Assert.That(result.Document).IsNotNull();
+            await Assert.That(result.Document!.Files).IsEmpty();
+            await Assert.That(result.TrxFileCount).IsEqualTo(1);
+        }
+        finally
+        {
             if (Directory.Exists(tempDir))
             {
                 Directory.Delete(tempDir, true);
