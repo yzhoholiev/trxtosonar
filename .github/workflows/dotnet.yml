@@ -59,6 +59,16 @@ jobs:
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
 
+      # TUnit writes an HTML report per assembly/os/tfm by default. Upload it even
+      # on failure, since a failed run is when the report is most useful.
+      - name: Upload test report (${{ matrix.rid }})
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-report-${{ matrix.rid }}
+          path: "**/*-report.html"
+          if-no-files-found: warn
+
       # Native AOT must be built on a matching-OS machine, so each runner packs its
       # own RID-specific, self-contained package.
       - name: Pack Native AOT tool package (${{ matrix.rid }})
