@@ -17,14 +17,19 @@ on:
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-latest
+            rid: osx-arm64
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -39,6 +44,12 @@ jobs:
           cache: true
           cache-dependency-path: "**/packages.lock.json"
 
+      # Native AOT linking on Linux needs clang and zlib; Windows (MSVC) and macOS
+      # (Xcode clang) runners already have a usable toolchain.
+      - name: Install Native AOT prerequisites (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+
       - name: Restore dependencies
         run: dotnet restore --locked-mode
 
@@ -48,16 +59,25 @@ jobs:
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
 
-      - name: Pack
-        if: matrix.os == 'ubuntu-latest'
-        run: dotnet pack --configuration Release --no-build --output artifacts
+      # Native AOT must be built on a matching-OS machine, so each runner packs its
+      # own RID-specific, self-contained package.
+      - name: Pack Native AOT tool package (${{ matrix.rid }})
+        run: dotnet pack src/TrxToSonar/TrxToSonar.csproj --configuration Release -r ${{ matrix.rid }} --output artifacts
 
-      - name: Upload build artifacts
-        if: matrix.os == 'ubuntu-latest'
+      # The RID-agnostic pointer package and the portable CoreCLR fallback (`any`)
+      # are platform-independent, so build them once on Linux.
+      - name: Pack pointer and portable fallback packages
+        if: runner.os == 'Linux'
+        run: |
+          dotnet pack src/TrxToSonar/TrxToSonar.csproj --configuration Release --output artifacts
+          dotnet pack src/TrxToSonar/TrxToSonar.csproj --configuration Release -r any -p:PublishAot=false --output artifacts
+
+      - name: Upload packages
         uses: actions/upload-artifact@v7
         with:
-          name: artifacts-github
-          path: artifacts/*
+          name: packages-${{ matrix.rid }}
+          path: artifacts/*.nupkg
+          if-no-files-found: error
 
   release:
     needs: build
@@ -65,16 +85,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download artifacts
+      - name: Download all packages
         uses: actions/download-artifact@v8
         with:
-          name: artifacts-github
           path: artifacts
+          pattern: packages-*
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          files: artifacts/*
+          files: artifacts/*.nupkg
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
