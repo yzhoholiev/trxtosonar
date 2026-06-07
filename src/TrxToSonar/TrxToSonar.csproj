@@ -10,16 +10,19 @@
     <ToolCommandName>dotnet-trx2sonar</ToolCommandName>
   </PropertyGroup>
 
-  <!-- Native AOT, packaged as a RID-specific .NET tool (.NET 10+). Each listed RID
-       gets a self-contained, AOT-compiled package; the `any` RID is a portable
-       CoreCLR fallback for platforms without a native build. The CLI picks the
-       right package automatically on `dotnet tool install`. AOT packages are built
-       per RID on a matching-OS machine: `dotnet pack -r <rid>`; the fallback with
-       `dotnet pack -r any -p:PublishAot=false`. -->
+  <!-- Packaged as a RID-specific .NET tool (.NET 10+): each listed RID gets a self-contained
+       Native AOT package, and `any` is a portable CoreCLR fallback. The CLI picks the right one
+       on `dotnet tool install`. PublishAot is passed at pack time (dotnet pack -r RID
+       -p:PublishAot=true, on a matching-OS machine; the fallback with dotnet pack -r any
+       -p:PublishAot=false) rather than set here, so the default restore stays RID-agnostic and the
+       committed lock file works under locked-mode restore on every CI OS. The analyzers below keep
+       the build AOT-safe in the meantime. -->
   <PropertyGroup>
-    <PublishAot>true</PublishAot>
     <ToolPackageRuntimeIdentifiers>win-x64;linux-x64;osx-arm64;any</ToolPackageRuntimeIdentifiers>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
   </PropertyGroup>
 
   <ItemGroup>

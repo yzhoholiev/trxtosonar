@@ -62,14 +62,14 @@ jobs:
       # Native AOT must be built on a matching-OS machine, so each runner packs its
       # own RID-specific, self-contained package.
       - name: Pack Native AOT tool package (${{ matrix.rid }})
-        run: dotnet pack src/TrxToSonar/TrxToSonar.csproj --configuration Release -r ${{ matrix.rid }} --output artifacts
+        run: dotnet pack src/TrxToSonar/TrxToSonar.csproj --configuration Release -r ${{ matrix.rid }} -p:PublishAot=true --output artifacts
 
       # The RID-agnostic pointer package and the portable CoreCLR fallback (`any`)
       # are platform-independent, so build them once on Linux.
       - name: Pack pointer and portable fallback packages
         if: runner.os == 'Linux'
         run: |
-          dotnet pack src/TrxToSonar/TrxToSonar.csproj --configuration Release --output artifacts
+          dotnet pack src/TrxToSonar/TrxToSonar.csproj --configuration Release -p:PublishAot=true --output artifacts
           dotnet pack src/TrxToSonar/TrxToSonar.csproj --configuration Release -r any -p:PublishAot=false --output artifacts
 
       - name: Upload packages
