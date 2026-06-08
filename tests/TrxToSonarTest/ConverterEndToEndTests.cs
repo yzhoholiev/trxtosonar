@@ -93,7 +93,7 @@ public class ConverterEndToEndTests
             var converter = new Converter(NullLogger<Converter>.Instance);
             ConversionResult result = converter.Parse(solutionDir, false);
             await Assert.That(result.Document).IsNotNull();
-            await Assert.That(Converter.Save(result.Document!, outputPath)).IsTrue();
+            await Assert.That(Converter.Save(result.Document!, outputPath).IsSuccess).IsTrue();
 
             string xml = IOFile.ReadAllText(outputPath);
             await Assert.That(xml).Contains("<failure message=\"Assertion failed\"");

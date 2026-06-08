@@ -18,38 +18,38 @@ internal static class SonarWriter
         OmitXmlDeclaration = true
     };
 
-    public static bool Write(SonarDocument document, string outputFilename)
+    public static Result Write(SonarDocument document, string outputFilename)
     {
         string xml = Serialize(document);
 
         if (string.IsNullOrEmpty(xml))
         {
-            return false;
+            return Result.Fail("Serialized document was empty");
         }
 
         var fileInfo = new FileInfo(outputFilename);
 
-        if (fileInfo.Exists)
-        {
-            fileInfo.Delete();
-        }
-        else if (fileInfo.Directory?.Exists == false)
-        {
-            fileInfo.Directory.Create();
-        }
-
         try
         {
+            if (fileInfo.Exists)
+            {
+                fileInfo.Delete();
+            }
+            else if (fileInfo.Directory?.Exists == false)
+            {
+                fileInfo.Directory.Create();
+            }
+
             System.IO.File.WriteAllText(outputFilename, xml);
-            return true;
+            return Result.Ok();
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
-            throw new TrxToSonarException($"Access denied writing to {outputFilename}", ex);
+            return Result.Fail($"Access denied writing to {outputFilename}");
         }
         catch (IOException ex)
         {
-            throw new TrxToSonarException($"IO error writing to {outputFilename}", ex);
+            return Result.Fail($"IO error writing to {outputFilename}: {ex.Message}");
         }
     }
 

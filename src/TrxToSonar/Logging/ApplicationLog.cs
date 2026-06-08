@@ -15,9 +15,9 @@ internal static partial class ApplicationLog
         int errored,
         int unresolved);
 
-    [LoggerMessage(LogLevel.Error, "An error occurred while processing TRX files")]
-    public static partial void ProcessingFailed(this ILogger logger, Exception exception);
+    [LoggerMessage(LogLevel.Error, "Failed to write output: {Reason}")]
+    public static partial void SaveFailed(this ILogger logger, string reason);
 
-    [LoggerMessage(LogLevel.Critical, "Application terminated unexpectedly")]
-    public static partial void TerminatedUnexpectedly(this ILogger logger, Exception exception);
+    [LoggerMessage(LogLevel.Critical, "Application terminated unexpectedly: {Reason}")]
+    public static partial void TerminatedUnexpectedly(this ILogger logger, string reason);
 }

@@ -67,9 +67,9 @@ public class ConverterTests
 
         try
         {
-            bool result = Converter.Save(sonarDocument, outputFile);
+            Result result = Converter.Save(sonarDocument, outputFile);
 
-            await Assert.That(result).IsTrue();
+            await Assert.That(result.IsSuccess).IsTrue();
             await Assert.That(IOFile.Exists(outputFile)).IsTrue();
         }
         finally
@@ -91,9 +91,9 @@ public class ConverterTests
         {
             IOFile.WriteAllText(outputFile, "initial content");
 
-            bool result = Converter.Save(sonarDocument, outputFile);
+            Result result = Converter.Save(sonarDocument, outputFile);
 
-            await Assert.That(result).IsTrue();
+            await Assert.That(result.IsSuccess).IsTrue();
             await Assert.That(IOFile.Exists(outputFile)).IsTrue();
             string content = IOFile.ReadAllText(outputFile);
             await Assert.That(content).Contains("testExecutions");
@@ -117,9 +117,9 @@ public class ConverterTests
 
         try
         {
-            bool result = Converter.Save(sonarDocument, outputFile);
+            Result result = Converter.Save(sonarDocument, outputFile);
 
-            await Assert.That(result).IsTrue();
+            await Assert.That(result.IsSuccess).IsTrue();
             await Assert.That(Directory.Exists(tempDir)).IsTrue();
             await Assert.That(IOFile.Exists(outputFile)).IsTrue();
         }

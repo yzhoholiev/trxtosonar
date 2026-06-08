@@ -40,26 +40,23 @@ try
         var logLevel = parseResult.GetValue(verbosityOption).ToLogLevel();
         var logger = new ConsoleLogger<Converter>(logLevel);
 
-        try
+        DirectoryInfo solutionDir = parseResult.GetRequiredValue(solutionDirectoryOption);
+        FileInfo output = parseResult.GetRequiredValue(outputOption);
+        bool useAbsolute = parseResult.GetValue(absolutePathOption);
+
+        var converter = new Converter(logger);
+
+        ConversionResult result = converter.Parse(solutionDir.FullName, useAbsolute);
+        logger.Summary(result.TrxFileCount, result.Total, result.Passed, result.Skipped, result.Failed, result.Errored, result.Unresolved);
+        if (result.Document is null)
         {
-            DirectoryInfo solutionDir = parseResult.GetRequiredValue(solutionDirectoryOption);
-            FileInfo output = parseResult.GetRequiredValue(outputOption);
-            bool useAbsolute = parseResult.GetValue(absolutePathOption);
-
-            var converter = new Converter(logger);
-
-            ConversionResult result = converter.Parse(solutionDir.FullName, useAbsolute);
-            logger.Summary(result.TrxFileCount, result.Total, result.Passed, result.Skipped, result.Failed, result.Errored, result.Unresolved);
-            if (result.Document is null)
-            {
-                return 1;
-            }
-
-            Converter.Save(result.Document, output.FullName);
+            return 1;
         }
-        catch (Exception ex)
+
+        Result save = Converter.Save(result.Document, output.FullName);
+        if (!save.IsSuccess)
         {
-            logger.ProcessingFailed(ex);
+            logger.SaveFailed(save.Error!);
             return 1;
         }
 
@@ -71,6 +68,6 @@ try
 }
 catch (Exception ex)
 {
-    new ConsoleLogger<Program>(LogLevel.Information).TerminatedUnexpectedly(ex);
+    new ConsoleLogger<Program>(LogLevel.Information).TerminatedUnexpectedly(ex.Message);
     return 1;
 }

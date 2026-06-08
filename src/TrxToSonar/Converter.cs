@@ -9,7 +9,7 @@ namespace TrxToSonar;
 
 internal sealed partial class Converter(ILogger<Converter> logger)
 {
-    public static bool Save(SonarDocument sonarDocument, string outputFilename)
+    public static Result Save(SonarDocument sonarDocument, string outputFilename)
     {
         return SonarWriter.Write(sonarDocument, outputFilename);
     }
@@ -80,8 +80,8 @@ internal sealed partial class Converter(ILogger<Converter> logger)
     [LoggerMessage(LogLevel.Debug, "Errored: {TestName}")]
     private partial void LogTestErrored(string? testName);
 
-    [LoggerMessage(LogLevel.Error, "Failed to get test file for test {TestName}")]
-    private partial void LogGetTestFileFailed(Exception exception, string? testName);
+    [LoggerMessage(LogLevel.Error, "Failed to resolve test file for {TestName}: {Reason}")]
+    private partial void LogResolveFailed(string? testName, string reason);
 
     private SonarDocument Merge(List<SonarDocument> sonarDocuments)
     {
@@ -223,16 +223,15 @@ internal sealed partial class Converter(ILogger<Converter> logger)
         string? testName,
         [NotNullWhen(true)] out string? testFile)
     {
-        testFile = null;
-        try
+        Result<string> result = resolver.Resolve(unitTest);
+        if (result.IsSuccess)
         {
-            testFile = resolver.Resolve(unitTest);
+            testFile = result.Value!;
             return true;
         }
-        catch (Exception ex)
-        {
-            LogGetTestFileFailed(ex, testName);
-            return false;
-        }
+
+        LogResolveFailed(testName, result.Error!);
+        testFile = null;
+        return false;
     }
 }

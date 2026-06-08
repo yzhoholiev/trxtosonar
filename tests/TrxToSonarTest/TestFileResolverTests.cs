@@ -7,48 +7,54 @@ namespace TrxToSonarTest;
 public class TestFileResolverTests
 {
     [Test]
-    public async Task Resolve_WithNullClassName_ThrowsException()
+    public async Task Resolve_WithNullClassName_ReturnsFailure()
     {
         var unitTest = new UnitTest(TestMethod: new TestMethod(@"C:\Projects\Tests\bin\Debug", null));
 
         var resolver = new TestFileResolver(@"C:\Projects", false);
 
-        await Assert.That(() => resolver.Resolve(unitTest))
-            .ThrowsExactly<TrxToSonarException>()
-            .WithMessage("Class name was not provided");
+        Result<string> result = resolver.Resolve(unitTest);
+
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.Error).IsEqualTo("Class name was not provided");
     }
 
     [Test]
-    public async Task Resolve_WithEmptyClassName_ThrowsException()
+    public async Task Resolve_WithEmptyClassName_ReturnsFailure()
     {
         var unitTest = new UnitTest(TestMethod: new TestMethod(@"C:\Projects\Tests\bin\Debug", string.Empty));
 
         var resolver = new TestFileResolver(@"C:\Projects", false);
 
-        await Assert.That(() => resolver.Resolve(unitTest))
-            .ThrowsExactly<TrxToSonarException>()
-            .WithMessage("Class name was not provided");
+        Result<string> result = resolver.Resolve(unitTest);
+
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.Error).IsEqualTo("Class name was not provided");
     }
 
     [Test]
-    public async Task Resolve_WithNullUnitTest_ThrowsException()
+    public async Task Resolve_WithNullUnitTest_ReturnsFailure()
     {
         var resolver = new TestFileResolver(@"C:\Projects", false);
 
-        await Assert.That(() => resolver.Resolve(null)).ThrowsExactly<TrxToSonarException>();
+        Result<string> result = resolver.Resolve(null);
+
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.Error).IsEqualTo("Class name was not provided");
     }
 
     [Test]
-    public async Task Resolve_WithFileNotFound_ThrowsFileNotFoundException()
+    public async Task Resolve_WithFileNotFound_ReturnsFailure()
     {
         using var temp = new TempProject();
         var unitTest = new UnitTest(TestMethod: new TestMethod(temp.BinDir, "MyNamespace.NonExistentTestClass"));
 
         var resolver = new TestFileResolver(temp.SolutionDir, false);
 
-        await Assert.That(() => resolver.Resolve(unitTest))
-            .ThrowsExactly<FileNotFoundException>()
-            .WithMessageContaining("Cannot find file with class NonExistentTestClass");
+        Result<string> result = resolver.Resolve(unitTest);
+
+        await Assert.That(result.IsSuccess).IsFalse();
+        await Assert.That(result.Error).Contains("Cannot find file with class NonExistentTestClass");
     }
 
     [Test]
@@ -59,10 +65,11 @@ public class TestFileResolverTests
 
         var resolver = new TestFileResolver(temp.SolutionDir, true);
 
-        string result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyTestClass"));
+        Result<string> result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyTestClass"));
 
-        await Assert.That(result).IsEqualTo(testFile);
-        await Assert.That(Path.IsPathRooted(result)).IsTrue();
+        await Assert.That(result.IsSuccess).IsTrue();
+        await Assert.That(result.Value).IsEqualTo(testFile);
+        await Assert.That(Path.IsPathRooted(result.Value)).IsTrue();
     }
 
     [Test]
@@ -73,10 +80,10 @@ public class TestFileResolverTests
 
         var resolver = new TestFileResolver(temp.SolutionDir, false);
 
-        string result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyTestClass"));
+        Result<string> result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyTestClass"));
 
-        await Assert.That(result).IsEqualTo(Path.Combine("Tests", "MyTestClass.cs"));
-        await Assert.That(Path.IsPathRooted(result)).IsFalse();
+        await Assert.That(result.Value).IsEqualTo(Path.Combine("Tests", "MyTestClass.cs"));
+        await Assert.That(Path.IsPathRooted(result.Value)).IsFalse();
     }
 
     [Test]
@@ -87,9 +94,9 @@ public class TestFileResolverTests
 
         var resolver = new TestFileResolver(temp.SolutionDir, false);
 
-        string result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyClass"));
+        Result<string> result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyClass"));
 
-        await Assert.That(result).IsEqualTo(Path.Combine("Tests", "MyClassTest.cs"));
+        await Assert.That(result.Value).IsEqualTo(Path.Combine("Tests", "MyClassTest.cs"));
     }
 
     [Test]
@@ -100,9 +107,9 @@ public class TestFileResolverTests
 
         var resolver = new TestFileResolver(temp.SolutionDir, false);
 
-        string result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyClass"));
+        Result<string> result = resolver.Resolve(temp.MakeUnitTest("MyNamespace.MyClass"));
 
-        await Assert.That(result).IsEqualTo(Path.Combine("Tests", "MyClassTests.cs"));
+        await Assert.That(result.Value).IsEqualTo(Path.Combine("Tests", "MyClassTests.cs"));
     }
 
     [Test]
@@ -113,9 +120,9 @@ public class TestFileResolverTests
 
         var resolver = new TestFileResolver(temp.SolutionDir, false);
 
-        string result = resolver.Resolve(temp.MakeUnitTest("My.Very.Long.Namespace.TestClass"));
+        Result<string> result = resolver.Resolve(temp.MakeUnitTest("My.Very.Long.Namespace.TestClass"));
 
-        await Assert.That(result).IsEqualTo(Path.Combine("Tests", "TestClass.cs"));
+        await Assert.That(result.Value).IsEqualTo(Path.Combine("Tests", "TestClass.cs"));
     }
 
     [Test]
@@ -128,14 +135,14 @@ public class TestFileResolverTests
 
         var resolver = new TestFileResolver(temp.SolutionDir, false);
 
-        string first = resolver.Resolve(temp.MakeUnitTest("MyNamespace.FirstClass"));
-        await Assert.That(first).IsEqualTo(Path.Combine("Tests", "FirstClass.cs"));
+        Result<string> first = resolver.Resolve(temp.MakeUnitTest("MyNamespace.FirstClass"));
+        await Assert.That(first.Value).IsEqualTo(Path.Combine("Tests", "FirstClass.cs"));
 
         // Add a second source file AFTER the cache is populated.
         temp.WriteSource("SecondClass.cs");
 
-        await Assert.That(() => resolver.Resolve(temp.MakeUnitTest("MyNamespace.SecondClass")))
-            .ThrowsExactly<FileNotFoundException>();
+        Result<string> second = resolver.Resolve(temp.MakeUnitTest("MyNamespace.SecondClass"));
+        await Assert.That(second.IsSuccess).IsFalse();
     }
 
     private sealed class TempProject : IDisposable

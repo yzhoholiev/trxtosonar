@@ -23,3 +23,9 @@ using System.Diagnostics.CodeAnalysis;
         Justification = "Catching general exceptions is required for robust logging",
         Scope = "namespaceanddescendants",
         Target = "~N:TrxToSonar")]
+
+[assembly:
+    SuppressMessage(
+        "Design",
+        "CA1031:Do not catch general exception types",
+        Justification = "Sole general catch is the last-resort handler in Program.cs that turns any unexpected error into a clean message and a non-zero exit code")]

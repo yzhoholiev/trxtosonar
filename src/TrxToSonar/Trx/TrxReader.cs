@@ -152,12 +152,7 @@ internal static class TrxReader
 
     private static DateTime ReadDateTime(XAttribute? attribute)
     {
-        if (attribute is null)
-        {
-            return default;
-        }
-
-        return DateTime.TryParse(attribute.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime value)
+        return attribute is not null && DateTime.TryParse(attribute.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime value)
             ? value
             : default;
     }

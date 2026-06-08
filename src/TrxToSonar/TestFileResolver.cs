@@ -22,22 +22,30 @@ internal sealed class TestFileResolver(string solutionDirectory, bool useAbsolut
 
     private readonly Dictionary<string, List<string>> _projectFiles = new(StringComparer.OrdinalIgnoreCase);
 
-    public string Resolve(UnitTest? unitTest)
+    public Result<string> Resolve(UnitTest? unitTest)
     {
         string? fullClassName = unitTest?.TestMethod?.ClassName;
 
         if (string.IsNullOrEmpty(fullClassName))
         {
-            throw new TrxToSonarException("Class name was not provided");
+            return Result<string>.Fail("Class name was not provided");
         }
 
         string className = GetSimpleClassName(fullClassName);
-        string projectDirectory = GetProjectDirectory(unitTest!.TestMethod!);
 
-        string file = FindInProject(projectDirectory, className)
-                      ?? throw new FileNotFoundException($"Cannot find file with class {className}. Check that file has the same name as the class.");
+        Result<string> projectDirectory = GetProjectDirectory(unitTest!.TestMethod!);
+        if (!projectDirectory.IsSuccess)
+        {
+            return Result<string>.Fail(projectDirectory.Error!);
+        }
 
-        return useAbsolutePath ? file : Path.GetRelativePath(solutionDirectory, file);
+        string? file = FindInProject(projectDirectory.Value!, className);
+        if (file is null)
+        {
+            return Result<string>.Fail($"Cannot find file with class {className}. Check that file has the same name as the class.");
+        }
+
+        return Result<string>.Ok(useAbsolutePath ? file : Path.GetRelativePath(solutionDirectory, file));
     }
 
     private static string GetSimpleClassName(string fullClassName)
@@ -46,15 +54,15 @@ internal sealed class TestFileResolver(string solutionDirectory, bool useAbsolut
         return lastDotIndex >= 0 ? fullClassName[(lastDotIndex + 1)..] : fullClassName;
     }
 
-    private static string GetProjectDirectory(TestMethod testMethod)
+    private static Result<string> GetProjectDirectory(TestMethod testMethod)
     {
         int indexOfSignature = testMethod.CodeBase.IndexOf(TestProjectSignature, StringComparison.OrdinalIgnoreCase);
         if (indexOfSignature < 0)
         {
-            throw new TrxToSonarException($"Could not find test project signature '{TestProjectSignature}' in code base path: {testMethod.CodeBase}");
+            return Result<string>.Fail($"Could not find test project signature '{TestProjectSignature}' in code base path: {testMethod.CodeBase}");
         }
 
-        return Path.GetFullPath(testMethod.CodeBase[..(indexOfSignature + ProjectRootSuffixLength)]);
+        return Result<string>.Ok(Path.GetFullPath(testMethod.CodeBase[..(indexOfSignature + ProjectRootSuffixLength)]));
     }
 
     private string? FindInProject(string projectDirectory, string className)

@@ -1,3 +1,4 @@
+using TrxToSonar;
 using TrxToSonar.Sonar;
 using TrxToSonar.Sonar.Models;
 using File = TrxToSonar.Sonar.Models.File;
@@ -16,9 +17,9 @@ public class SonarWriterTests
 
         try
         {
-            bool result = SonarWriter.Write(document, outputFile);
+            Result result = SonarWriter.Write(document, outputFile);
 
-            await Assert.That(result).IsTrue();
+            await Assert.That(result.IsSuccess).IsTrue();
             string content = IOFile.ReadAllText(outputFile);
             await Assert.That(content).Contains("<testExecutions");
             await Assert.That(content).Contains("version=\"1\"");
@@ -100,9 +101,9 @@ public class SonarWriterTests
 
         try
         {
-            bool result = SonarWriter.Write(document, outputFile);
+            Result result = SonarWriter.Write(document, outputFile);
 
-            await Assert.That(result).IsTrue();
+            await Assert.That(result.IsSuccess).IsTrue();
             string content = IOFile.ReadAllText(outputFile);
             await Assert.That(content).DoesNotContain("old content");
         }
@@ -124,9 +125,9 @@ public class SonarWriterTests
 
         try
         {
-            bool result = SonarWriter.Write(document, outputFile);
+            Result result = SonarWriter.Write(document, outputFile);
 
-            await Assert.That(result).IsTrue();
+            await Assert.That(result.IsSuccess).IsTrue();
             await Assert.That(Directory.Exists(tempDir)).IsTrue();
             await Assert.That(IOFile.Exists(outputFile)).IsTrue();
         }
