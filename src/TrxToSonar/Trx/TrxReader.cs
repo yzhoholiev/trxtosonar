@@ -75,86 +75,72 @@ internal static class TrxReader
 
     private static UnitTestResult ReadUnitTestResult(XElement element, XNamespace ns)
     {
-        return new UnitTestResult
-        {
-            ExecutionId = (string?) element.Attribute("executionId"),
-            TestId = (string?) element.Attribute("testId"),
-            TestName = (string?) element.Attribute("testName"),
-            Duration = (string?) element.Attribute("duration"),
-            StartTime = ReadDateTime(element.Attribute("startTime")),
-            EndTime = ReadDateTime(element.Attribute("endTime")),
-            Outcome = ReadOutcome((string?) element.Attribute("outcome")),
-            Output = element.Element(ns + "Output") is { } output ? ReadOutput(output, ns) : null
-        };
+        return new UnitTestResult(
+            (string?) element.Attribute("executionId"),
+            (string?) element.Attribute("testId"),
+            (string?) element.Attribute("testName"),
+            (string?) element.Attribute("duration"),
+            ReadDateTime(element.Attribute("startTime")),
+            ReadDateTime(element.Attribute("endTime")),
+            ReadOutcome((string?) element.Attribute("outcome")),
+            element.Element(ns + "Output") is { } output ? ReadOutput(output, ns) : null);
     }
 
     private static UnitTest ReadUnitTest(XElement element, XNamespace ns)
     {
-        return new UnitTest
-        {
-            Name = (string?) element.Attribute("name"),
-            Storage = (string?) element.Attribute("storage"),
-            Id = (string?) element.Attribute("id"),
-            Execution = element.Element(ns + "Execution") is { } execution
-                ? new Execution { Id = (string?) execution.Attribute("id") }
+        return new UnitTest(
+            (string?) element.Attribute("name"),
+            (string?) element.Attribute("storage"),
+            (string?) element.Attribute("id"),
+            element.Element(ns + "Execution") is { } execution
+                ? new Execution((string?) execution.Attribute("id"))
                 : null,
-            TestMethod = element.Element(ns + "TestMethod") is { } testMethod
-                ? new TestMethod
-                {
-                    CodeBase = (string?) testMethod.Attribute("codeBase") ?? string.Empty,
-                    ClassName = (string?) testMethod.Attribute("className"),
-                    Name = (string?) testMethod.Attribute("name")
-                }
-                : null
-        };
+            element.Element(ns + "TestMethod") is { } testMethod
+                ? new TestMethod(
+                    (string?) testMethod.Attribute("codeBase") ?? string.Empty,
+                    (string?) testMethod.Attribute("className"),
+                    (string?) testMethod.Attribute("name"))
+                : null);
     }
 
     private static Output ReadOutput(XElement element, XNamespace ns)
     {
-        return new Output
-        {
-            StdOut = (string?) element.Element(ns + "StdOut"),
-            ErrorInfo = element.Element(ns + "ErrorInfo") is { } errorInfo
-                ? new ErrorInfo
-                {
-                    Message = (string?) errorInfo.Element(ns + "Message"),
-                    StackTrace = (string?) errorInfo.Element(ns + "StackTrace")
-                }
-                : null
-        };
+        return new Output(
+            (string?) element.Element(ns + "StdOut"),
+            element.Element(ns + "ErrorInfo") is { } errorInfo
+                ? new ErrorInfo(
+                    (string?) errorInfo.Element(ns + "Message"),
+                    (string?) errorInfo.Element(ns + "StackTrace"))
+                : null);
     }
 
     private static ResultSummary ReadResultSummary(XElement element, XNamespace ns)
     {
-        return new ResultSummary
-        {
-            Outcome = (string?) element.Attribute("outcome"),
-            Counters = element.Element(ns + "Counters") is { } counters ? ReadCounters(counters) : null,
-            Output = element.Element(ns + "Output") is { } output ? ReadOutput(output, ns) : null
-        };
+        return new ResultSummary(
+            (string?) element.Attribute("outcome"),
+            element.Element(ns + "Counters") is { } counters ? ReadCounters(counters) : null,
+            element.Element(ns + "Output") is { } output ? ReadOutput(output, ns) : null);
     }
 
     private static Counters ReadCounters(XElement element)
     {
-        return new Counters
-        {
-            Total = ReadInt(element, "total"),
-            Executed = ReadInt(element, "executed"),
-            Passed = ReadInt(element, "passed"),
-            Failed = ReadInt(element, "failed"),
-            Error = ReadInt(element, "error"),
-            Timeout = ReadInt(element, "timeout"),
-            Aborted = ReadInt(element, "aborted"),
-            Inconclusive = ReadInt(element, "inconclusive"),
-            PassedButRunAborted = ReadInt(element, "passedButRunAborted"),
-            NotRunnable = ReadInt(element, "notRunnable"),
-            NotExecuted = ReadInt(element, "notExecuted"),
-            Disconnected = ReadInt(element, "disconnected"),
-            Warning = ReadInt(element, "warning"),
-            Completed = ReadInt(element, "completed"),
-            InProgress = ReadInt(element, "inProgress"),
-            Pending = ReadInt(element, "pending")
-        };
+        return new Counters(
+            ReadInt(element, "total"),
+            ReadInt(element, "executed"),
+            ReadInt(element, "passed"),
+            ReadInt(element, "failed"),
+            ReadInt(element, "error"),
+            ReadInt(element, "timeout"),
+            ReadInt(element, "aborted"),
+            ReadInt(element, "inconclusive"),
+            ReadInt(element, "passedButRunAborted"),
+            ReadInt(element, "notRunnable"),
+            ReadInt(element, "notExecuted"),
+            ReadInt(element, "disconnected"),
+            ReadInt(element, "warning"),
+            ReadInt(element, "completed"),
+            ReadInt(element, "inProgress"),
+            ReadInt(element, "pending"));
     }
 
     private static int ReadInt(XElement element, string name)

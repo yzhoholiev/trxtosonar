@@ -1,14 +1,8 @@
 namespace TrxToSonar.Trx.Models;
 
-public sealed record UnitTest
-{
-    public string? Name { get; init; }
-
-    public string? Storage { get; init; }
-
-    public string? Id { get; init; }
-
-    public Execution? Execution { get; init; }
-
-    public TestMethod? TestMethod { get; init; }
-}
+public sealed record UnitTest(
+    string? Name = null,
+    string? Storage = null,
+    string? Id = null,
+    Execution? Execution = null,
+    TestMethod? TestMethod = null);

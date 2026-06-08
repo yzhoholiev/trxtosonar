@@ -11,7 +11,7 @@ public class ExtensionsTests
     public async Task BuildTestDefinitionLookup_WithMatchingId_ReturnsUnitTest()
     {
         var trxDocument = new TrxDocument();
-        var unitTest = new UnitTest { Id = "test-123", Name = "TestMethod1" };
+        var unitTest = new UnitTest(Id: "test-123", Name: "TestMethod1");
         trxDocument.TestDefinitions.Add(unitTest);
 
         Dictionary<string, UnitTest> lookup = trxDocument.BuildTestDefinitionLookup();
@@ -25,7 +25,7 @@ public class ExtensionsTests
     public async Task BuildTestDefinitionLookup_WithNonMatchingId_ReturnsFalse()
     {
         var trxDocument = new TrxDocument();
-        var unitTest = new UnitTest { Id = "test-123", Name = "TestMethod1" };
+        var unitTest = new UnitTest(Id: "test-123", Name: "TestMethod1");
         trxDocument.TestDefinitions.Add(unitTest);
 
         Dictionary<string, UnitTest> lookup = trxDocument.BuildTestDefinitionLookup();
@@ -37,8 +37,8 @@ public class ExtensionsTests
     public async Task BuildTestDefinitionLookup_SkipsDefinitionsWithNullId()
     {
         var trxDocument = new TrxDocument();
-        trxDocument.TestDefinitions.Add(new UnitTest { Id = null, Name = "Nameless" });
-        trxDocument.TestDefinitions.Add(new UnitTest { Id = "test-1", Name = "Named" });
+        trxDocument.TestDefinitions.Add(new UnitTest(Id: null, Name: "Nameless"));
+        trxDocument.TestDefinitions.Add(new UnitTest(Id: "test-1", Name: "Named"));
 
         Dictionary<string, UnitTest> lookup = trxDocument.BuildTestDefinitionLookup();
 

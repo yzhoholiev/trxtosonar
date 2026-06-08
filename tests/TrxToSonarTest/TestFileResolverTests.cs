@@ -9,14 +9,7 @@ public class TestFileResolverTests
     [Test]
     public async Task Resolve_WithNullClassName_ThrowsException()
     {
-        var unitTest = new UnitTest
-        {
-            TestMethod = new TestMethod
-            {
-                ClassName = null,
-                CodeBase = @"C:\Projects\Tests\bin\Debug"
-            }
-        };
+        var unitTest = new UnitTest(TestMethod: new TestMethod(@"C:\Projects\Tests\bin\Debug", null));
 
         var resolver = new TestFileResolver(@"C:\Projects", false);
 
@@ -28,14 +21,7 @@ public class TestFileResolverTests
     [Test]
     public async Task Resolve_WithEmptyClassName_ThrowsException()
     {
-        var unitTest = new UnitTest
-        {
-            TestMethod = new TestMethod
-            {
-                ClassName = string.Empty,
-                CodeBase = @"C:\Projects\Tests\bin\Debug"
-            }
-        };
+        var unitTest = new UnitTest(TestMethod: new TestMethod(@"C:\Projects\Tests\bin\Debug", string.Empty));
 
         var resolver = new TestFileResolver(@"C:\Projects", false);
 
@@ -56,14 +42,7 @@ public class TestFileResolverTests
     public async Task Resolve_WithFileNotFound_ThrowsFileNotFoundException()
     {
         using var temp = new TempProject();
-        var unitTest = new UnitTest
-        {
-            TestMethod = new TestMethod
-            {
-                ClassName = "MyNamespace.NonExistentTestClass",
-                CodeBase = temp.BinDir
-            }
-        };
+        var unitTest = new UnitTest(TestMethod: new TestMethod(temp.BinDir, "MyNamespace.NonExistentTestClass"));
 
         var resolver = new TestFileResolver(temp.SolutionDir, false);
 
@@ -189,14 +168,7 @@ public class TestFileResolverTests
 
         public UnitTest MakeUnitTest(string className)
         {
-            return new UnitTest
-            {
-                TestMethod = new TestMethod
-                {
-                    ClassName = className,
-                    CodeBase = BinDir
-                }
-            };
+            return new UnitTest(TestMethod: new TestMethod(BinDir, className));
         }
     }
 }

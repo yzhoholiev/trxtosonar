@@ -122,6 +122,48 @@ public class TrxReaderTests
     }
 
     [Test]
+    public async Task Read_MapsEveryCounterField()
+    {
+        // Distinct value per counter so a positional/order mistake in the Counters constructor surfaces.
+        string path = WriteTrx(
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+              <ResultSummary outcome="Completed">
+                <Counters total="1" executed="2" passed="3" failed="4" error="5" timeout="6" aborted="7" inconclusive="8" passedButRunAborted="9" notRunnable="10" notExecuted="11" disconnected="12" warning="13" completed="14" inProgress="15" pending="16" />
+              </ResultSummary>
+            </TestRun>
+            """);
+
+        try
+        {
+            Counters? counters = TrxReader.Read(path)?.ResultSummary?.Counters;
+
+            await Assert.That(counters).IsNotNull();
+            await Assert.That(counters!.Total).IsEqualTo(1);
+            await Assert.That(counters.Executed).IsEqualTo(2);
+            await Assert.That(counters.Passed).IsEqualTo(3);
+            await Assert.That(counters.Failed).IsEqualTo(4);
+            await Assert.That(counters.Error).IsEqualTo(5);
+            await Assert.That(counters.Timeout).IsEqualTo(6);
+            await Assert.That(counters.Aborted).IsEqualTo(7);
+            await Assert.That(counters.Inconclusive).IsEqualTo(8);
+            await Assert.That(counters.PassedButRunAborted).IsEqualTo(9);
+            await Assert.That(counters.NotRunnable).IsEqualTo(10);
+            await Assert.That(counters.NotExecuted).IsEqualTo(11);
+            await Assert.That(counters.Disconnected).IsEqualTo(12);
+            await Assert.That(counters.Warning).IsEqualTo(13);
+            await Assert.That(counters.Completed).IsEqualTo(14);
+            await Assert.That(counters.InProgress).IsEqualTo(15);
+            await Assert.That(counters.Pending).IsEqualTo(16);
+        }
+        finally
+        {
+            IOFile.Delete(path);
+        }
+    }
+
+    [Test]
     public async Task Read_WithUnrecognizedOutcome_DefaultsToError()
     {
         string path = WriteTrx(
