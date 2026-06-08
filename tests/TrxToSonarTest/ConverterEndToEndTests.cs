@@ -7,7 +7,7 @@ using IOFile = System.IO.File;
 
 namespace TrxToSonarTest;
 
-public class ConverterEndToEndTests
+public sealed class ConverterEndToEndTests
 {
     [Test]
     public async Task Parse_FullTrxFixture_MapsOutcomesToCorrectSonarElements()
@@ -29,7 +29,7 @@ public class ConverterEndToEndTests
         {
             var converter = new Converter(NullLogger<Converter>.Instance);
 
-            ConversionResult result = converter.Parse(solutionDir, false);
+            ConversionResult result = converter.Parse(new DirectoryInfo(solutionDir), false);
 
             await Assert.That(result.Document).IsNotNull();
             File file = await Assert.That(result.Document!.Files).HasSingleItem();
@@ -91,7 +91,7 @@ public class ConverterEndToEndTests
         try
         {
             var converter = new Converter(NullLogger<Converter>.Instance);
-            ConversionResult result = converter.Parse(solutionDir, false);
+            ConversionResult result = converter.Parse(new DirectoryInfo(solutionDir), false);
             await Assert.That(result.Document).IsNotNull();
             await Assert.That(Converter.Save(result.Document!, outputPath).IsSuccess).IsTrue();
 
@@ -99,6 +99,50 @@ public class ConverterEndToEndTests
             await Assert.That(xml).Contains("<failure message=\"Assertion failed\"");
             await Assert.That(xml).Contains("<error message=\"Exception thrown\"");
             await Assert.That(xml).Contains("<skipped");
+        }
+        finally
+        {
+            if (Directory.Exists(solutionDir))
+            {
+                Directory.Delete(solutionDir, true);
+            }
+        }
+    }
+
+    [Test]
+    public async Task Parse_ResultWithUnknownTestId_CountsAsUnresolved()
+    {
+        string solutionDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(solutionDir);
+
+        // The result references testId "ghost" (no matching definition); a second definition
+        // intentionally has no id, exercising the null-id skip in the definition lookup.
+        string trx = """
+                     <?xml version="1.0" encoding="UTF-8"?>
+                     <TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+                       <Results>
+                         <UnitTestResult executionId="e1" testId="ghost" testName="OrphanTest" duration="00:00:00" outcome="Passed" />
+                       </Results>
+                       <TestDefinitions>
+                         <UnitTest id="t1" name="RealTest">
+                           <TestMethod codeBase="C:\bin\X.dll" className="N.RealTest" name="RealTest" />
+                         </UnitTest>
+                         <UnitTest name="NoIdDefinition">
+                           <TestMethod codeBase="C:\bin\X.dll" className="N.NoId" name="NoIdDefinition" />
+                         </UnitTest>
+                       </TestDefinitions>
+                     </TestRun>
+                     """;
+        IOFile.WriteAllText(Path.Combine(solutionDir, "results.trx"), trx);
+
+        try
+        {
+            var converter = new Converter(NullLogger<Converter>.Instance);
+
+            ConversionResult result = converter.Parse(new DirectoryInfo(solutionDir), false);
+
+            await Assert.That(result.Unresolved).IsEqualTo(1);
+            await Assert.That(result.Document!.Files).IsEmpty();
         }
         finally
         {

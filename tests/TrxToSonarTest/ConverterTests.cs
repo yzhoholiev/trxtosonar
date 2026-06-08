@@ -5,33 +5,16 @@ using IOFile = System.IO.File;
 
 namespace TrxToSonarTest;
 
-public class ConverterTests
+public sealed class ConverterTests
 {
     private readonly Converter _converter = new(NullLogger<Converter>.Instance);
-
-    [Test]
-    public async Task Parse_WithNullDirectory_ReturnsNullDocument()
-    {
-        ConversionResult result = _converter.Parse(null, false);
-
-        await Assert.That(result.Document).IsNull();
-        await Assert.That(result.TrxFileCount).IsEqualTo(0);
-    }
-
-    [Test]
-    public async Task Parse_WithEmptyDirectory_ReturnsNullDocument()
-    {
-        ConversionResult result = _converter.Parse(string.Empty, false);
-
-        await Assert.That(result.Document).IsNull();
-    }
 
     [Test]
     public async Task Parse_WithNonExistentDirectory_ReturnsNullDocument()
     {
         string nonExistentDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
-        ConversionResult result = _converter.Parse(nonExistentDir, false);
+        ConversionResult result = _converter.Parse(new DirectoryInfo(nonExistentDir), false);
 
         await Assert.That(result.Document).IsNull();
     }
@@ -44,7 +27,7 @@ public class ConverterTests
 
         try
         {
-            ConversionResult result = _converter.Parse(tempDir, false);
+            ConversionResult result = _converter.Parse(new DirectoryInfo(tempDir), false);
 
             await Assert.That(result.Document).IsNotNull();
             await Assert.That(result.Document!.Files).IsEmpty();
@@ -142,7 +125,7 @@ public class ConverterTests
 
         try
         {
-            ConversionResult result = _converter.Parse(tempDir, false);
+            ConversionResult result = _converter.Parse(new DirectoryInfo(tempDir), false);
 
             // The bad file is counted but skipped; the run still produces a document.
             await Assert.That(result.Document).IsNotNull();

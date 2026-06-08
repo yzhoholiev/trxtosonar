@@ -1,11 +1,11 @@
 namespace TrxToSonar.Trx.Models;
 
 public sealed record UnitTestResult(
-    string? ExecutionId,
-    string? TestId,
-    string? TestName,
-    string? Duration,
-    DateTime StartTime,
-    DateTime EndTime,
-    Outcome Outcome,
-    Output? Output);
+    string? ExecutionId = null,
+    string? TestId = null,
+    string? TestName = null,
+    string? Duration = null,
+    DateTime StartTime = default,
+    DateTime EndTime = default,
+    Outcome Outcome = default,
+    Output? Output = null);

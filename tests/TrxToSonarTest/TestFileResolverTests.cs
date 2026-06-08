@@ -4,7 +4,7 @@ using IOFile = System.IO.File;
 
 namespace TrxToSonarTest;
 
-public class TestFileResolverTests
+public sealed class TestFileResolverTests
 {
     [Test]
     public async Task Resolve_WithNullClassName_ReturnsFailure()

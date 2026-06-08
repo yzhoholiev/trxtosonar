@@ -3,7 +3,7 @@ using TrxToSonar.Logging;
 
 namespace TrxToSonarTest.Logging;
 
-public class VerbosityExtensionsTests
+public sealed class VerbosityExtensionsTests
 {
     [Test]
     public async Task ToLogLevel_Quiet_MapsToError()

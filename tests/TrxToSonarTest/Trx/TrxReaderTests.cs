@@ -4,7 +4,7 @@ using IOFile = System.IO.File;
 
 namespace TrxToSonarTest.Trx;
 
-public class TrxReaderTests
+public sealed class TrxReaderTests
 {
     private const string SampleTrx = """
                                      <?xml version="1.0" encoding="UTF-8"?>
@@ -41,7 +41,7 @@ public class TrxReaderTests
     {
         string path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.trx");
 
-        await Assert.That(TrxReader.Read(path)).IsNull();
+        await Assert.That(TrxReader.Read(new FileInfo(path))).IsNull();
     }
 
     [Test]
@@ -51,7 +51,7 @@ public class TrxReaderTests
 
         try
         {
-            await Assert.That(TrxReader.Read(path)).IsNull();
+            await Assert.That(TrxReader.Read(new FileInfo(path))).IsNull();
         }
         finally
         {
@@ -66,7 +66,7 @@ public class TrxReaderTests
 
         try
         {
-            TrxDocument? document = TrxReader.Read(path);
+            TrxDocument? document = TrxReader.Read(new FileInfo(path));
 
             await Assert.That(document).IsNotNull();
             await Assert.That(document!.Results.Count).IsEqualTo(2);
@@ -105,7 +105,7 @@ public class TrxReaderTests
 
         try
         {
-            TrxDocument? document = TrxReader.Read(path);
+            TrxDocument? document = TrxReader.Read(new FileInfo(path));
 
             await Assert.That(document).IsNotNull();
             await Assert.That(document!.ResultSummary).IsNotNull();
@@ -137,7 +137,7 @@ public class TrxReaderTests
 
         try
         {
-            Counters? counters = TrxReader.Read(path)?.ResultSummary?.Counters;
+            Counters? counters = TrxReader.Read(new FileInfo(path))?.ResultSummary?.Counters;
 
             await Assert.That(counters).IsNotNull();
             await Assert.That(counters!.Total).IsEqualTo(1);
@@ -178,7 +178,7 @@ public class TrxReaderTests
 
         try
         {
-            TrxDocument? document = TrxReader.Read(path);
+            TrxDocument? document = TrxReader.Read(new FileInfo(path));
 
             await Assert.That(document).IsNotNull();
             UnitTestResult result = document!.Results.Single();

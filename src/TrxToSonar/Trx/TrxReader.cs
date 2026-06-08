@@ -5,26 +5,18 @@ using TrxToSonar.Trx.Models;
 
 namespace TrxToSonar.Trx;
 
-/// <summary>
-///     Reads a Visual Studio TRX document. Element lookups are namespace-qualified because the TRX
-///     root declares a default namespace.
-/// </summary>
 internal static class TrxReader
 {
-    /// <summary>
-    ///     Reads and parses a TRX file. Returns null for a missing, unreadable, or malformed file so
-    ///     one bad TRX is skipped rather than aborting the whole run.
-    /// </summary>
-    public static TrxDocument? Read(string filename)
+    public static TrxDocument? Read(FileInfo file)
     {
-        if (!File.Exists(filename))
+        if (!file.Exists)
         {
             return null;
         }
 
         try
         {
-            var document = XDocument.Load(filename);
+            var document = XDocument.Load(file.FullName);
             return ReadDocument(document);
         }
         catch (XmlException)

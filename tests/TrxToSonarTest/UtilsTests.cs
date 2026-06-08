@@ -2,7 +2,7 @@ using TrxToSonar;
 
 namespace TrxToSonarTest;
 
-public class UtilsTests
+public sealed class UtilsTests
 {
     [Test]
     public async Task TrxDurationShouldBeConverted()

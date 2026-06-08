@@ -46,7 +46,7 @@ try
 
         var converter = new Converter(logger);
 
-        ConversionResult result = converter.Parse(solutionDir.FullName, useAbsolute);
+        ConversionResult result = converter.Parse(solutionDir, useAbsolute);
         logger.Summary(result.TrxFileCount, result.Total, result.Passed, result.Skipped, result.Failed, result.Errored, result.Unresolved);
         if (result.Document is null)
         {
@@ -54,13 +54,13 @@ try
         }
 
         Result save = Converter.Save(result.Document, output.FullName);
-        if (!save.IsSuccess)
+        if (save.IsSuccess)
         {
-            logger.SaveFailed(save.Error!);
-            return 1;
+            return 0;
         }
 
-        return 0;
+        logger.SaveFailed(save.Error!);
+        return 1;
     });
 
     ParseResult parseResult = rootCommand.Parse(args);

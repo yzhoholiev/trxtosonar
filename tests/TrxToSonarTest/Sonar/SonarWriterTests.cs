@@ -6,7 +6,7 @@ using IOFile = System.IO.File;
 
 namespace TrxToSonarTest.Sonar;
 
-public class SonarWriterTests
+public sealed class SonarWriterTests
 {
     [Test]
     public async Task Write_WithValidSonarDocument_WritesExpectedElements()
