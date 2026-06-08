@@ -10,23 +10,31 @@
     <ToolCommandName>dotnet-trx2sonar</ToolCommandName>
   </PropertyGroup>
 
-  <!-- RID-specific .NET 10 tool: each RID ships a self-contained Native AOT build, `any` a
-       portable CoreCLR fallback. PublishAot is passed at pack time (-r RID -p:PublishAot=true)
-       so the default restore and committed lock file stay RID-agnostic for locked-mode CI. -->
   <PropertyGroup>
     <ToolPackageRuntimeIdentifiers>win-x64;linux-x64;osx-arm64;any</ToolPackageRuntimeIdentifiers>
     <InvariantGlobalization>true</InvariantGlobalization>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+  </PropertyGroup>
 
-    <!-- AOT size switches (active only under PublishAot). Don't disable StackTraceSupport or
-         UseSystemResourceKeys — that strips the exception traces/messages this tool reports with. -->
+  <PropertyGroup>
+    <OptimizationPreference>Size</OptimizationPreference>
     <StripSymbols>true</StripSymbols>
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
     <EventSourceSupport>false</EventSourceSupport>
+    <MetricsSupport>false</MetricsSupport>
     <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
     <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
     <DebuggerSupport>false</DebuggerSupport>
+    <IlcScanReflection>false</IlcScanReflection>
+    <StackTraceSupport>false</StackTraceSupport>
+    <XmlResolverIsNetworkingEnabledByDefault>false</XmlResolverIsNetworkingEnabledByDefault>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PublishAot)' == 'true'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
