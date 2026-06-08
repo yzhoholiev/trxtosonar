@@ -49,7 +49,7 @@ try
             var converter = new Converter(logger);
 
             ConversionResult result = converter.Parse(solutionDir.FullName, useAbsolute);
-            ConsoleOutput.WriteSummary(result);
+            logger.Summary(result.TrxFileCount, result.Total, result.Passed, result.Skipped, result.Failed, result.Errored, result.Unresolved);
             if (result.Document is null)
             {
                 return 1;
