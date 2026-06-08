@@ -723,5 +723,13 @@ indent_size = 2
 indent_size = 2
 tab_width = 2
 
-[packages{,.*}.lock.json]
+[packages.*.lock.json]
+insert_final_newline = false
+
+# Markdown files
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false
+
+[Directory.Packages.props]
 insert_final_newline = false
